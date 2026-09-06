@@ -388,17 +388,26 @@ function SplitText({ text, className, stagger: s = 0.03 }) {
 ## 18. 逐詞捲動揭示
 
 ```jsx
+// One hook per component: useTransform must not be called inside .map()
+function RevealWord({ word, progress, start }) {
+  const opacity = useTransform(progress, [start, start + 0.2], [0.15, 1])
+  return <motion.span aria-hidden style={{ opacity }}>{word}{" "}</motion.span>
+}
+
 function ScrollReveal({ text }) {
   const ref = useRef(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start 0.9", "start 0.25"] })
   const words = text.split(" ")
   return (
     <p ref={ref} aria-label={text}>
-      {words.map((w, i) => {
-        const start = words.length === 1 ? 0 : (i / (words.length - 1)) * 0.8
-        const opacity = useTransform(scrollYProgress, [start, start + 0.2], [0.15, 1])
-        return <motion.span aria-hidden key={i} style={{ opacity }}>{w}{" "}</motion.span>
-      })}
+      {words.map((w, i) => (
+        <RevealWord
+          key={i}
+          word={w}
+          progress={scrollYProgress}
+          start={words.length === 1 ? 0 : (i / (words.length - 1)) * 0.8}
+        />
+      ))}
     </p>
   )
 }
