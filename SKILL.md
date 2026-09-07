@@ -167,6 +167,11 @@ movement** (roughly `0.12–0.15s` against `0.2–0.35s`).
 In dark themes shadows are nearly invisible, so elevation has to be expressed by *brighter surfaces*
 instead. Switching themes swaps the mechanism, not just the palette.
 
+A third thing is sometimes on screen — **texture**: hatching, grain, a repeating rule. It is not a
+channel and not a spec term. It is a modifier of `lumin` that reinforces the ground an object rests
+on, and it must stay quieter than the smallest luminance step in your ladder, or it reads as noise
+instead of material. Reinforcement and accent only → `contrast.md` §8.
+
 > The optical model, light/dark token sets, the cost of animating each luminance property,
 > accessibility floors → `references/contrast.md`
 

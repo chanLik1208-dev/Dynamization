@@ -165,6 +165,11 @@ el movimiento** (aproximadamente `0.12–0.15s` frente a `0.2–0.35s`).
 En los temas oscuros las sombras son casi invisibles, así que la elevación tiene que expresarse con *superficies más brillantes*.
 Cambiar de tema intercambia el mecanismo, no sólo la paleta.
 
+A veces hay una tercera cosa en pantalla: la **textura** —trama de líneas, grano, una regla que se repite—. No es un
+canal ni un término de la especificación. Es un modificador de `lumin` que refuerza el fondo sobre el que se apoya un
+objeto, y tiene que quedarse más callada que el paso de luminancia más pequeño de tu escalera, o se lee como ruido
+en lugar de como material. Sólo refuerzo y acento → `contrast.md` §8.
+
 > El modelo óptico, los sets de tokens claro/oscuro, el coste de animar cada propiedad de luminancia,
 > los mínimos de accesibilidad → `references/contrast.md`
 

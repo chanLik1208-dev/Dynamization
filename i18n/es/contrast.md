@@ -108,6 +108,10 @@ contraste es relativo.
 así que se renderiza distinto sobre fondos distintos, y arrastra el contraste del texto por debajo de la legibilidad. Usa
 un token `text-disabled` dedicado.
 
+La textura —trama de líneas, grano— no es un cuarto trabajo. Refuerza el primero y acentúa la página,
+y está sujeta a los límites de §8. Si estás echando mano de ella para hacer alguno de los trabajos de esta lista, estás
+echando mano de la herramienta equivocada.
+
 ---
 
 ## 4. Cablear la luminancia dentro del movimiento: expresión compuesta
@@ -246,7 +250,75 @@ límites numéricos que no puedes cruzar.
 
 ---
 
-## 8. Lista de comprobación
+## 8. Textura: refuerzo, nunca un canal propio
+
+El movimiento es tiempo. La luminancia es espacio. La textura —trama de líneas, grano, una regla que se repite— no es ninguna de las dos: es
+lo único en la pantalla que **no cambia**. Ése es todo su trabajo. Un material estable es
+aquello *contra lo que* las cosas que se mueven y las que se iluminan resultan legibles.
+
+Así que la textura no es un séptimo término del vocabulario de la especificación (`SKILL.md` §1). Es un modificador de
+`lumin`, se gana su sitio sólo reforzando una afirmación que la luminancia ya está haciendo, y está
+sujeta a dos límites duros.
+
+### Pertenece al fondo, no a la figura
+
+Trama la lámina; nunca la cosa que está de pie sobre ella. El ojo lee la textura como *material*, así que texturizar
+un objeto afirma que el objeto está hecho de algo: una afirmación que casi nunca quieres hacer sobre una tarjeta, un
+botón o un diálogo. Texturizar el fondo que hay detrás afirma que el fondo es una superficie sobre la que el objeto se apoya,
+que es exactamente lo que §1 ya está diciendo con la luz que viene de arriba. Las dos cosas concuerdan, y esa
+concordancia es el refuerzo.
+
+| Legítimo | Ilegítimo |
+|---|---|
+| la lámina detrás de una imagen, un dibujo, un espécimen | la propia tarjeta, botón o panel |
+| un estado vacío — *esta lámina todavía no se ha dibujado* | cualquier cosa que lleve texto corrido |
+| una región marcada como no disponible o reservada, **con etiqueta** | un estado distinguido sólo por la textura |
+| un bloque de acento por página, en el tono de acento | un patrón sin ningún argumento detrás |
+
+La tercera fila es el único uso informativo genuino, y es prestado: en el dibujo técnico, la
+trama ha significado *sección* o *no forma parte de esta vista* desde hace dos siglos. Ahí funciona porque
+siempre va etiquetada. La textura por sí sola cae bajo la misma prohibición que la luminancia por sí sola — §7.
+
+### Tiene que quedar por debajo del paso de luminancia más pequeño que uses
+
+Éste es el número, y es toda la disciplina:
+
+> **Intensidad de la trama < la diferencia entre dos niveles de superficie adyacentes.**
+
+Si la trama es más fuerte que tu cambio `e2 → e3`, la elevación deja de leerse como altura y empieza a
+leerse como ruido: al ojo se le ofrecen dos explicaciones que compiten por una misma diferencia de luminancia. En la
+práctica eso significa alrededor de un **4–5% ink** sobre la superficie en la que se asienta, a un paso de **5–8px**: lo bastante
+fino como para que a distancia de lectura se resuelva como un fondo ligeramente más oscuro en lugar de como líneas.
+
+Dos consecuencias que se le escapan a la gente:
+
+- **El tema oscuro necesita algo más, no menos.** La sensibilidad al contraste cae a baja luminancia, así que
+  el mismo alfa se lee más tenue. Sube alrededor de un punto porcentual, no tres: el techo sigue
+  siendo el paso entre niveles de superficie, y en un tema oscuro ese paso es el mecanismo que carga con la elevación
+  (§2). Una trama que le grita por encima aplana la pantalla exactamente igual que las sombras portadas.
+- **Un ángulo y un paso por producto.** Dos ángulos se leen como dos materiales, que es una afirmación sobre
+  tus objetos que no tenías intención de hacer. Elige 45° y para.
+
+### No se mueve
+
+**Nunca animes una trama, y nunca animes una superficie grande por debajo de una.** Un patrón que se repite en
+movimiento bate contra la rejilla de píxeles y produce muaré, y el muaré se lee como un fallo de renderizado en lugar
+de como un efecto.
+
+Ésta es la única sección de este archivo sin una fila de tiempos, y ésa es la clave: el movimiento y la
+luminancia son las cosas que cambian; la textura es aquello *contra lo que* cambian. Quitar la única referencia
+fija es como una pantalla llena de animación de buen gusto acaba sintiéndose a la deriva.
+
+El brillo del esqueleto de carga en `recipes.md` §22 no es una excepción a esto. Eso es una banda de gradiente
+recorriendo un marcador de posición plano, no un patrón al que se mueve.
+
+**Coste:** un gradiente repetido es de nivel paint (§6), y estático, así que se paga una vez. Se vuelve
+caro en el momento en que se asienta sobre una capa que se repinta por alguna otra razón —un contenedor con scroll,
+o un elemento sometido a fundido cruzado—. Mantenlo en láminas pequeñas y quietas.
+
+---
+
+## 9. Lista de comprobación
 
 Recórrela después de construir cualquier cosa con capas o estados:
 
@@ -261,3 +333,7 @@ Recórrela después de construir cualquier cosa con capas o estados:
 - [ ] ¿Hay algún estado distinguido **sólo** por el brillo?
 - [ ] En listas largas, ¿la sombra de hover es una capa superpuesta con fundido cruzado en lugar de una sombra animada?
 - [ ] ¿El área de desenfoque de fondo está acotada?
+- [ ] ¿Alguna trama es más callada que el paso de nivel de superficie más pequeño, en **ambos** temas?
+- [ ] ¿Está sobre el fondo y no sobre los objetos, y nunca debajo de texto corrido?
+- [ ] ¿Un ángulo y un paso en todo el producto?
+- [ ] ¿Hay algo distinguido sólo por la textura?

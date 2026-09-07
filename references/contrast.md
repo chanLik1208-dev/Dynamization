@@ -108,6 +108,10 @@ contrast is relative.
 so it renders differently on different backgrounds, and it drags text contrast below legibility. Use
 a dedicated `text-disabled` token.
 
+Texture — hatching, grain — is not a fourth job. It reinforces the first one and accents the page,
+and it is bound by the limits in §8. If you are reaching for it to do a job on this list, you are
+reaching for the wrong tool.
+
 ---
 
 ## 4. Wiring luminance into motion: composite expression
@@ -246,7 +250,75 @@ numeric limits you may not cross.
 
 ---
 
-## 8. Checklist
+## 8. Texture: reinforcement, never a channel of its own
+
+Motion is time. Luminance is space. Texture — hatching, grain, a repeating rule — is neither: it is
+the one thing on the screen that **does not change**. That is its entire job. A stable material is
+what the moving and the lit things are legible *against*.
+
+So texture is not a seventh term in the spec vocabulary (`SKILL.md` §1). It is a modifier of
+`lumin`, it earns its place only by reinforcing a statement luminance is already making, and it is
+subject to two hard limits.
+
+### It belongs to the ground, not the figure
+
+Hatch the plate; never the thing standing on it. The eye reads texture as *material*, so texturing
+an object claims the object is made of something — a claim you almost never mean about a card, a
+button or a dialog. Texturing the ground behind it claims the ground is a surface the object rests
+on, which is exactly what §1 is already saying with light from above. The two agree, and that
+agreement is the reinforcement.
+
+| Legitimate | Illegitimate |
+|---|---|
+| the plate behind an image, a drawing, a specimen | the card, button or panel itself |
+| an empty state — *this plate has not been drawn yet* | anything carrying running text |
+| a region marked unavailable or reserved, **with a label** | a state distinguished by texture alone |
+| one accent block per page, in the accent hue | a pattern with no argument behind it |
+
+The third row is the one genuine information use, and it is borrowed: in engineering drawing,
+hatching has meant *section* or *not part of this view* for two centuries. It works there because it
+is always labelled. Texture alone falls under the same prohibition as luminance alone — §7.
+
+### It must sit below the smallest luminance step you use
+
+This is the number, and it is the whole discipline:
+
+> **Hatch amplitude < the difference between two adjacent surface tiers.**
+
+If the hatch is stronger than your `e2 → e3` change, elevation stops reading as height and starts
+reading as noise: the eye is offered two competing explanations for one luminance difference. In
+practice that means about **4–5% ink** over the surface it sits on, at a period of **5–8px** — fine
+enough that at reading distance it resolves into a slightly darker ground rather than into lines.
+
+Two consequences people miss:
+
+- **The dark theme needs slightly more, not less.** Contrast sensitivity falls at low luminance, so
+  the same alpha reads fainter. Go up by about a percentage point, not by three — the ceiling is
+  still the surface-tier step, and in a dark theme that step is the mechanism carrying elevation
+  (§2). A hatch that out-shouts it flattens the screen exactly the way ported shadows do.
+- **One angle and one period per product.** Two angles read as two materials, which is a claim about
+  your objects that you did not intend to make. Pick 45° and stop.
+
+### It does not move
+
+**Never animate a hatch, and never animate a large surface underneath one.** A repeating pattern in
+motion beats against the pixel grid and produces moiré, and moiré reads as a rendering fault rather
+than as an effect.
+
+This is the only section in this file with no timing row, and that is the point: motion and
+luminance are the things that change; texture is what they change *against*. Removing the one fixed
+reference is how a screen full of tasteful animation ends up feeling unmoored.
+
+The skeleton shimmer in `recipes.md` §22 is not an exception to this. That is a gradient band
+travelling across a flat placeholder — not a pattern being moved.
+
+**Cost:** a repeating gradient is paint-tier (§6), and static, so it is paid once. It becomes
+expensive the moment it sits on a layer that repaints for some other reason — a scrolling container,
+or an element being cross-faded. Keep it on small, still plates.
+
+---
+
+## 9. Checklist
 
 Run through this after building anything with layering or state:
 
@@ -261,3 +333,7 @@ Run through this after building anything with layering or state:
 - [ ] Is any state distinguished by brightness **only**?
 - [ ] In long lists, is the hover shadow a cross-faded overlay rather than an animated shadow?
 - [ ] Is the backdrop-blur area bounded?
+- [ ] Is any hatch quieter than the smallest surface-tier step, in **both** themes?
+- [ ] Is it on the ground rather than on the objects, and never under running text?
+- [ ] One angle and one period across the whole product?
+- [ ] Is anything distinguished by texture alone?
