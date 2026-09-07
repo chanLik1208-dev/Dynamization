@@ -19,11 +19,14 @@
 ## 0. Language
 
 `references/` 底下每個檔案都是英文。判斷章節（本檔案、`feel`、`contrast`、`recipes`、
-`pitfalls`）的完整翻譯放在 `i18n/<locale>/`：
+`pitfalls`、`errata`）的完整翻譯放在 `i18n/<locale>/`：
 
 | Locale | Path |
 |---|---|
 | 繁體中文 | `i18n/zh-TW/` |
+| 日本語 | `i18n/ja/` |
+| 한국어 | `i18n/ko/` |
+| Español | `i18n/es/` |
 
 **如果你正在用其中一種語言回覆使用者，就去讀該語系的檔案，不要讀英文版。**
 轉接層（`references/adapters/`）刻意只有英文——它們大多是程式碼和 API 識別字，
@@ -171,8 +174,9 @@ hover 動畫**不可以超過 0.2s**——游標可能早就移開了。
 | 在 CSS / WAAPI / Luau 裡寫真正的呼叫 | `references/adapters/<runtime>.md` |
 | 你的執行環境在這裡沒有轉接層 | `references/adapters/porting.md` |
 | 什麼都不動、會卡頓、退場不觸發、反向會抖 | `references/pitfalls.md` |
+| **看起來什麼都沒壞，而你正要說做完了** | `references/errata.md` ← **出貨前先讀** |
 
-非英文語系：把 `feel`、`contrast`、`recipes`、`pitfalls` 換成 `i18n/<locale>/` 底下的版本。
+非英文語系：把 `feel`、`contrast`、`recipes`、`pitfalls`、`errata` 換成 `i18n/<locale>/` 底下的版本。
 
 ## 5. 無障礙不是可選項
 

@@ -8,7 +8,10 @@ eye can verify**, and leaves the API to a swappable adapter.
 
 <sub>
 <a href="SKILL.md">English</a> ·
-<a href="i18n/zh-TW/SKILL.md">繁體中文</a>
+<a href="i18n/zh-TW/SKILL.md">繁體中文</a> ·
+<a href="i18n/ja/SKILL.md">日本語</a> ·
+<a href="i18n/ko/SKILL.md">한국어</a> ·
+<a href="i18n/es/SKILL.md">Español</a>
 </sub>
 
 ---
@@ -68,6 +71,8 @@ references/
                             closed form, and how to bake one into a curve
   recipes.md                25 patterns, each as an intent and a specification
   pitfalls.md               Symptom → cause → fix, grouped by mechanism
+  errata.md                 The mistakes this pack invites — failures that throw nothing,
+                            log nothing, and ship
   adapters/
     css.md                  CSS only — transitions, linear() springs, @starting-style
     waapi.md                Web Animations API — retargeting, composite modes, timelines
@@ -75,10 +80,11 @@ references/
                             nine-slice elevation, a Luau spring
     porting.md              Write an adapter for any runtime: seven questions and a
                             conformance checklist
-i18n/zh-TW/                 Full translations of the judgment chapters
+i18n/<locale>/              Full translations of the judgment chapters
+                            (zh-TW, ja, ko, es)
 ```
 
-The judgment chapters — `SKILL`, `feel`, `contrast`, `recipes`, `pitfalls` — are translated. The
+The judgment chapters — `SKILL`, `feel`, `contrast`, `recipes`, `pitfalls`, `errata` — are translated. The
 adapters stay English-only by design: they are mostly code and API identifiers, where translation
 adds noise and invites drift.
 

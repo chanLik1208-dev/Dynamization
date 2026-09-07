@@ -22,11 +22,14 @@ detail you pick up in §2 and then stop thinking about.
 ## 0. Language
 
 Every file in `references/` is English. Full translations of the judgment chapters
-(this file, `feel`, `contrast`, `recipes`, `pitfalls`) live in `i18n/<locale>/`:
+(this file, `feel`, `contrast`, `recipes`, `pitfalls`, `errata`) live in `i18n/<locale>/`:
 
 | Locale | Path |
 |---|---|
 | 繁體中文 | `i18n/zh-TW/` |
+| 日本語 | `i18n/ja/` |
+| 한국어 | `i18n/ko/` |
+| Español | `i18n/es/` |
 
 **If you are answering the user in one of those languages, read that locale's files instead of the
 English ones.** The adapters (`references/adapters/`) are English-only by design — they are mostly
@@ -180,8 +183,9 @@ Read the file for the job in front of you. **Do not read them all.**
 | Writing the actual calls in CSS / WAAPI / Luau | `references/adapters/<runtime>.md` |
 | Your runtime has no adapter here | `references/adapters/porting.md` |
 | Nothing animates, it janks, exit won't fire, the reversal stutters | `references/pitfalls.md` |
+| **Nothing looks broken, and you are about to say you are done** | `references/errata.md` ← **read it before you ship** |
 
-Non-English locales: substitute `i18n/<locale>/` for `feel`, `contrast`, `recipes`, `pitfalls`.
+Non-English locales: substitute `i18n/<locale>/` for `feel`, `contrast`, `recipes`, `pitfalls`, `errata`.
 
 ## 5. Accessibility is not optional
 

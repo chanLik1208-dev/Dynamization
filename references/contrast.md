@@ -214,6 +214,11 @@ For a shadow that means an overlay behind the element carrying the *higher* tier
 opacity 0, fading to 1 on hover. The shadow itself never repaints; only one alpha value changes. On
 a long list — dozens of cards hovered in sequence — the difference is dramatic.
 
+**One precondition, and it is the reason this technique usually fails: the element must not clip.**
+A shadow paints outside its own box, so any `overflow: hidden` — the reflex for a rounded card with
+an image at the top — erases the overlay entirely, and erases it silently, because the cross-fade
+still runs on a layer nobody can see. Clip the media instead of the card. → `errata.md` §A1
+
 The same move works for corner radius (two pre-rendered masks), for a colour ramp (two fills), and
 for a blur (two pre-blurred copies). It costs memory and buys frames.
 
