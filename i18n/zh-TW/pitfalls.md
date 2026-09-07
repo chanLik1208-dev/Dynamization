@@ -1,223 +1,144 @@
-# pitfalls.md — 症狀 → 原因 → 修法
+# pitfalls.md — 症狀 → 成因 → 解法
 
-先用症狀查表，再看下面的分區詳解。
+先找症狀，再讀對應的章節。這些成因是按*機制*分類的，不是按 API 分，所以可以跨執行環境沿用——退場動畫消失，在網頁框架、遊戲引擎、原生工具組裡都是同樣那三個成因。
 
-| 症狀 | 最可能的原因 |
+| 症狀 | 最可能的成因 |
 |---|---|
-| 退場動畫完全沒觸發 | `AnimatePresence` 自己被移除了，或子代 `key` 不穩定 → §1 |
-| 動畫每次都從頭跳一次 | 元件被重建（key 變了 / `motion.create` 在 render 裡）→ §2 |
-| layout 動畫沒反應 | 元素是 `display: inline`，或該次沒有 re-render → §3 |
-| 內容在 layout 動畫中被拉扯變形 | 子元素沒加 `layout`，或圓角/陰影沒寫在 `style` → §3 |
-| 捲動時整頁抖動 | 捲軸出現/消失觸發 layout 動畫 → §3 |
-| 動畫掉幀、卡頓 | 動到 layout 觸發屬性，或大面積 paint → §4 |
-| 滾動連動有階梯感 | 沒過 `useSpring` → §5 |
-| 拖曳距離跟手指對不上 | 父層有 transform / scale → §6 |
-| hover 在觸控裝置上「卡住」 | 用了原生 hover 事件而非 Motion 的 `hover()` / `whileHover` → §6 |
-| SVG 的 layout 動畫壞掉 | SVG 不支援 layout 動畫 → §7 |
-| 深色模式下層級消失 | 陰影在深色底看不見 → `contrast.md` §2 |
-| 動畫一半的文字讀不到 | 中間態對比不足 → `contrast.md` §7 |
+| 退場動畫從來不觸發 | 東西還來不及動就被銷毀了 → §1 |
+| 每次觸發，動畫都從頭開始 | 被動畫的物件一直被重建，或你是從名義上的起點重新設定目標 → §2 |
+| 反向時會頓一下，或直接煞停 | 速度沒有被帶過去；這是 Tier 2 的行為 → §2 |
+| 重排動畫完全沒反應 | 沒有東西告訴系統版面變了，或這種元素根本不吃 transform → §3 |
+| 內容被拉長，圓角變成橢圓 | 縮放一個矩形卻沒有反向縮放它的內容 → §3 |
+| 捲動時整頁在抖 | 捲軸或安全區域出現，觸發了重排動畫 → §3 |
+| 掉幀、卡頓 | 動畫了版面層或繪製層的屬性 → §4 |
+| 跟著捲動的數值看得出一格一格跳 | 直接吃原始捲動輸入，沒有平滑化 → §5 |
+| 載入時畫面從頂端掃下來 | 捲動驅動的彈簧初始值是零 → §5 |
+| 拖曳距離跟指標對不上 | 上層有 transform 或縮放，改變了座標空間 → §6 |
+| 觸控裝置上 hover 會「卡住」 | 合成出來的 hover 事件 → §6 |
+| 動畫跑完了，狀態卻沒變 | 邏輯掛在一個根本沒被呼叫的完成 callback 上 → §7 |
+| 深色主題下高度感不見了 | 陰影在深色表面上是看不見的 → `contrast.md` §2 |
+| 動畫中途的文字讀不出來 | 中間狀態的對比度太低 → `contrast.md` §7 |
 
 ---
 
-## 1. `AnimatePresence` / exit
+## 1. 永遠不會發生的退場
 
-**exit 不觸發，三個原因：**
+退場動畫本身就是個矛盾：你要讓一個邏輯上已經不存在的東西動起來。每個執行環境都需要某種機制把它多留活一段時間，而**失敗永遠是三種情況之一**：
 
-```jsx
-// ❌ AnimatePresence 自己被卸載了,它無法控制自己的退場
-{isVisible && <AnimatePresence><Component /></AnimatePresence>}
+1. **保命機制被包在要被移除的東西裡面。** 如果負責延後銷毀的那層包裝本身也被同一個條件銷毀，那就沒有東西活下來播動畫了。保命機制必須放在條件判斷的**外面**，條件要放在它裡面。
+2. **識別身分不穩定。** 系統靠某個 key 來追蹤「哪一項是哪一項」。如果那個 key 是位置索引，移掉第 2 項會讓第 3 項*變成*第 2 項，系統看到的就是更新而不是移除。用穩定、唯一的 id。
+3. **要退場的東西不是保命機制的直接子節點。** 中間夾一層無作用的包裝，機制就看不到它了。去看實際的樹，不是原始碼上的樹。
 
-// ✅ 條件要在裡面
-<AnimatePresence>{isVisible && <Component />}</AnimatePresence>
-```
+**巢狀退場**是另一個獨立的陷阱：整棵子樹一次被移除時，子節點通常**不會**有機會播自己的退場——父層先跑完，順手把它們一起帶走。如果你要子節點先離場，就明確排出順序（`feel.md` §6：內容先清空，*然後*容器才收起來）。
 
-```jsx
-// ❌ index 當 key:重排時 key 對不上項目
-{items.map((item, i) => <Component key={i} />)}
-// ✅ 穩定唯一 id
-{items.map(item => <Component key={item.id} />)}
-```
-
-**退場元件必須是 `AnimatePresence` 的直接子代**才拿得到 `exit`。中間隔了一層非 motion 的 wrapper 就會失效。
-
-**巢狀 AnimatePresence**：外層移除時，內層的子代預設**不會**播退場。要傳播就給內層加 `propagate`：
-```jsx
-<AnimatePresence propagate>…</AnimatePresence>
-```
-
-**`mode="popLayout"` 的兩個要求**：
-- 自訂元件子代必須 `forwardRef` 且把 ref 傳到要 pop 的 DOM 節點
-- 動畫父層要有非 `static` 的 `position`（popLayout 內部用 `position: absolute`，而任何有 transform 的祖先都會變成 offset parent）
-
-```jsx
-<motion.ul layout style={{ position: "relative" }}>
-  <AnimatePresence mode="popLayout">…</AnimatePresence>
-</motion.ul>
-```
-
-**`mode="sync"` 混 layout 動畫**時，外面包一層 `<LayoutGroup>`，讓 `AnimatePresence` 之外的元件也知道要重排。
+**設計檢查：** 如果你講不出退場過程中是什麼機制讓元素活著，那你還沒有退場動畫。先去 adapter 裡把它找出來，再開始設計。
 
 ---
 
-## 2. 元件被重建
+## 2. 重新開始、重建，以及丟失的速度
 
-```jsx
-// ❌ 每次 render 都是新元件,動畫狀態全丟
-function Row() {
-  const MotionCard = motion.create(Card)   // 災難
-  return <MotionCard animate={…} />
-}
-// ✅ 提到模組層級
-const MotionCard = motion.create(Card)
-```
+**被動畫的物件一直被重建。** 任何在 render/update 函式裡面建構出來的東西，每一幀或每一次更新都是一個全新物件，完全沒有繼承前一個的動畫狀態。把建構搬出去。這是「第一次會動，之後就再也不動」最常見的單一成因，而且在每一套宣告式 UI 系統裡長得都一樣。
 
-`motion.create()` 包裝的元件必須把 `ref` 傳到真正要動的 DOM 節點（React 18 用 `forwardRef`，React 19 用 `props.ref`），否則什麼都不會動。
+**你是從名義上的起點重新設定目標。** 動畫在飛行途中被重新觸發時，新動畫必須從**當下**的值開始，而不是宣告的起始值。先讀出當下的值。任何在元素已經跑到 A 和 B 之間某處時還說「從 A 動到 B」的寫法，都會彈回 A，而那個彈回正好發生在使用者動作的瞬間。
 
-動畫在打斷時「跳回起點」：keyframes 第一格改寫 `null`。
-```jsx
-animate={{ x: [null, 100, 0] }}
-```
+**速度沒有被帶過去。** 這是 Tier 2 的行為（`SKILL.md` §2），不是 bug，是能力不足。三條出路，依序：
+
+- 對真正由手勢驅動的互動，自己手動積分彈簧——`spring.md` §3。
+- 把 `b ≤ 0.15` 守住，這樣從零速度重新開始，看起來跟接續下去差不多。
+- 把可重複觸發的動畫壓在 `dur ≤ 0.2s`，低於重新開始會被察覺的門檻。
+
+**不要混用兩套參數系統。** 如果你的執行環境同時吃 duration 和 stiffness，設了其中一個通常會讓另一個默默失效。挑一套詞彙（`Dv`/`b`，在邊界處換算），另一套永遠不要碰。
 
 ---
 
-## 3. Layout 動畫
+## 3. 重排與共享元素動畫
 
-**沒反應：**
-- 元素是 `display: inline` → 瀏覽器不對 inline 元素套 transform。改 `inline-block` / `block` / `flex`。
-- 該次沒有 re-render。layout 動畫由 React render 觸發，純 CSS 改變不會觸發。
-- 兩個元件互相影響版面但不同時 render → 包 `<LayoutGroup>`。
+**完全沒反應：**
 
-**版面改變要走 `style` / `className`，不要走 `animate`：**
-```jsx
-// ❌ layout 和 animate 打架
-<motion.div layout animate={{ width: open ? 300 : 100 }} />
-// ✅ layout 自己處理
-<motion.div layout style={{ width: open ? 300 : 100 }} />
-```
+- **這種元素不吃 transform。** 行內文字框、某些由版面系統管理的容器、還有很多 2D UI 節點，是完全無視 transform 的。換成一個吃得到 transform 的元素。
+- **沒有東西告訴系統版面變了。** 重排動畫的原理是比較*變更前*和*變更後*兩次量測，總要有東西去觸發那次比較。繞過系統更新週期的變更，就沒有比較，也就沒有動畫。
+- **兩個元素會互相影響版面，卻分開更新。** 它們必須在同一輪裡被量測，否則其中一個會動到另一個還沒讓出來的位置。
 
-**內容被拉扯（scale 畸變）：**
-- 直接子元素也加 `layout`，Motion 會做反向縮放補償
-- 長寬比會變的元素（圖片、文字）改用 `layout="position"`
-- **`borderRadius` 與 `boxShadow` 必須寫在 `style` 裡**才會被反畸變修正，寫在 CSS class 裡不會
-- `border` 無法完美補償（最小 1px 限制）→ 改用「父層加 padding 當邊框」
+**版面的事交給版面做，不要交給動畫系統。** 用動畫去設定尺寸，*同時*又讓重排系統去動同一個尺寸，就是兩套系統在搶同一個數字。讓版面瞬間改變，再讓重排機制去動視覺上的差異。
 
-```jsx
-<motion.div layout style={{ borderRadius: 10, padding: 5, background: "#000" }}>
-  <motion.div layout style={{ borderRadius: 5, background: "#fff" }} />
-</motion.div>
-```
+**內容被拉長（縮放失真）。** 用縮放做動畫的矩形，會把裡面所有東西都扭曲掉：文字被拉長、圓角變橢圓、邊框粗細改變。解法，依偏好順序：
 
-**捲動容器內**：捲動容器要加 `layoutScroll`。
-**`position: fixed` 內**：加 `layoutRoot`。
+- 用倒數係數反向縮放直接子節點。
+- 對長寬比會改變的元素（圖片、文字區塊），**只動位置**，尺寸讓它瞬間變。
+- **圓角和陰影必須是動畫系統看得到的值**，才有辦法被修正。埋在樣式表或靜態資產裡的圓角，是沒辦法反向縮放的。
+- 邊框沒辦法修得完美——有一個 one-pixel 的下限。改用一個帶內距的父層來當邊框。
 
-**視窗水平縮放時 layout 動畫被停用** —— 這是刻意的效能保護，不是 bug。
+**在捲動容器或固定定位的圖層裡面**，除非你告訴系統這個容器的存在，否則前後兩次量測是在不同的座標空間下取得的。這兩種情況通常都要明確開啟某個選項。
 
-**捲軸出現造成整頁抖動：**
-```css
-body { overflow-y: auto; scrollbar-gutter: stable; }
-```
+**捲動時整頁抖動**幾乎都是捲軸或安全區域內距一下出現一下消失，改變了內容寬度，於是所有東西都觸發了重排動畫。把那條溝槽永久保留起來。
 
-**巢狀 layout 動畫的相對定位**：Motion 用**父層相對**計算（不像 View Transitions 用頁面絕對座標），所以子層有 `delay` 也不會被父層「拋下」。要改變錨點用 `layoutAnchor={{ x: 0.5, y: 0.5 }}`。
+**關於座標的一點補充：** 計算**相對於父層**位置的重排機制，會讓延遲的子節點跟著移動中的父層走。計算**頁面絕對**位置的則會把子節點丟在後面。如果你的子節點轉場看起來跟父層脫節，原因就在這裡。
 
 ---
 
 ## 4. 效能
 
-**永遠安全**：`transform`（含獨立的 `x` / `scale` / `rotate`）、`opacity`
-**觸發 paint（要實測）**：`box-shadow`、`border-radius`、`background-color`、`filter`
-**觸發 layout（避免）**：`width`、`height`、`top`、`left`、`margin`、`padding`、`border-width`
+**永遠安全**：transform（translate / scale / rotate）、opacity
+**繪製層——要量過才算**：陰影、圓角、背景色、filter
+**版面層——避免**：width、height、top、left、margin、padding、border width
 
-替代寫法：
-```js
-animate(el, { boxShadow: "10px 10px black" })          // ❌ paint
-animate(el, { filter: "drop-shadow(10px 10px black)" })// ✅ 合成器(Chrome/FF)
+通用的替代法則：**不要去動那個昂貴的屬性，改成把它的兩個預先算好的狀態交叉淡入淡出。** 模糊陰影變成一層疊上去、只動 opacity 的覆蓋層。圓角變成兩張遮罩。背景模糊變成兩份預先模糊好的副本。這是拿記憶體換幀數——`contrast.md` §6。
 
-animate(el, { borderRadius: "50px" })                  // ❌
-animate(el, { clipPath: "inset(0 round 50px)" })       // ✅
-```
-大面積 `box-shadow` 動畫改用偽元素 opacity → `recipes.md` §5。
+有 clip 或 mask 可用時，它通常比被取代掉的那個屬性便宜：裁切成圓角矩形勝過去動圓角，裁切出一個揭露效果勝過去動高度。
 
-**硬體加速的意外**：Motion 的獨立 transform（`x`、`scale`）底層走 CSS 變數，**目前不會被硬體加速**。主執行緒很忙時仍可能卡。極端在意時寫完整字串：
-```js
-animate(".box", { transform: "translateX(100px) scale(2)" })
-```
-另外 Chrome 對 `%` 為單位的 transform 曾長期不加速。
+**圖層提示要省著用。** 每一個「把這個提升成獨立圖層」的提示都在吃 GPU 記憶體，滿頁都是提示的頁面，比一個都沒有的還慢。只加在你實際量測過的元素上。
 
-**圖層提示要克制**：`will-change: transform` 每一層都佔 GPU 記憶體，只在確認有問題的元素上加。
-
-**文字動畫**：分割文字會讓 DOM 暴增（一次性成本），但 `innerText` 逐幀更新會**持續**觸發 layout 重算。scramble 用等寬字型、typewriter 用 `contain: layout`。**per-character 的 blur 是效能陷阱** —— 小圖層放大模糊後互相重疊，GPU 成本遠高於對整塊做一次 blur。
+**文字是昂貴的那個案例。** 把文字拆成片段會讓物件數量膨脹*一次*，那沒問題。每一幀重寫文字內容則會觸發**持續不斷的**文字排版，那就不行了。先把最終尺寸預留好，亂碼效果請用等寬前進的字型，讓那個框永遠不用重新量測。**逐字模糊是個很具體的陷阱**——很多小圖層，每一個都被自己的模糊半徑撐大，大量重疊，成本遠高於整塊套一次模糊。
 
 ---
 
 ## 5. 捲動
 
-- 滾輪是離散事件，`scrollYProgress` 直接綁 style 會有階梯感 → 一律過 `useSpring`。
-- `useSpring` 追蹤捲動值時加 `skipInitialAnimation: true`，避免掛載時從 0 掃過去。
-- 釘住用 CSS `position: sticky`，不要用 JS 改 `top`。
-- `whileInView` 沒有 `once: true` 會反覆播放；`amount` 預設 `"some"`（一個像素）通常太早，改 `0.3`。
-- `useScroll` 的 `offset` 順序是 `[起點, 終點]`，字串格式為 `"<target位置> <container位置>"`，例如 `"start end"` ＝ target 的頂端碰到 container 的底端。
+- 捲動輸入是離散的。直接綁到 transform 上就會一格一格跳。永遠透過彈簧平滑它——`feel.md` §7。
+- **那顆彈簧要用當下的捲動值初始化**，否則載入時畫面會從頂端掃下來。這個問題不斷被上到正式環境，因為它在開發時重現不出來——開發時你本來就在頁面最上面。
+- 釘住元素要用平台原生的 sticky 機制，絕對不要在捲動 handler 裡寫入位置。handler 驅動的釘住會比合成器慢一幀，抖動看得出來。
+- 捲動觸發的動畫需要一個明確的**只觸發一次**旗標，以及一個明確的**門檻**（約 30% 可見）。這兩個預設值通常都是錯的。
+- 對「進度」的定義要講精確。多數捲動 API 是用兩對位置來表達範圍——目標上的一個點，加上容器上的一個點——配對配反了，你會得到一個元素還沒進畫面就已經演完的動畫，或是一個永遠跑不完的動畫。
 
 ---
 
-## 6. 手勢
+## 6. 手勢與座標空間
 
-**拖曳距離與手指對不上** → 父層有 `transform` / `scale`。任何有 transform 的祖先都會改變座標系。`MotionConfig` 的 `transformPagePoint` 可修正整頁縮放的情況。
+**拖曳跟不上指標** → 上層某個祖先帶了 transform 或縮放，於是指標座標和元素座標處在不同的空間。要嘛把指標位移除以累積的縮放倍率，要嘛在使用前先把指標位置轉換到元素的區域空間。同一個成因也會弄壞縮放父層裡的重排動畫。
 
-**縮放父層裡的 layout 動畫異常** → 同上原因。
+**觸控裝置上 hover 會「卡住」** → 觸控輸入會合成出 hover 事件，而那些事件永遠等不到對應的離開事件。有的話就用平台過濾過的 hover 訊號；沒有的話就自己在 touch-end 時清掉 hover 狀態，並且用「這台裝置有真正的指標裝置嗎」這類查詢來把關 hover 效果。
 
-**拖曳圖片出現瀏覽器的殘影** → 給 `<img>` 加 `draggable={false}` 或 CSS `-webkit-user-drag: none`。
+**觸控時拖曳跟捲動打架** → 必須在手勢開始*之前*就告訴平台你要吃哪個軸。一開始就宣告；等到第一個移動事件之後才決定永遠太遲，因為捲動已經開始了。
 
-**觸控裝置 hover「卡住」** → 瀏覽器會為觸控模擬 hover 事件。用 `whileHover` / `hover()`（會過濾假事件），不要自己綁 `mouseenter`。
+**子節點的點擊被父層手勢吃掉** → 手勢系統通常會把處理延到輸入流程的最後，這表示在手勢 callback 裡面阻止傳遞已經太晚了。要在原始的 pointer-down 就擋掉，或是用系統提供的那種明確的「這個手勢不要往外傳」選項。
 
-**pan / drag 在觸控上沒反應或與捲動打架** → 需要 CSS `touch-action`：
-```css
-.draggable-x { touch-action: pan-y; }   /* 橫向拖曳,縱向留給捲動 */
-.draggable   { touch-action: none; }
-```
+**拖曳結束時還是觸發了點擊** → 指標移動超過大約 3px 之後就把點擊取消掉。大多數系統會幫你做，但要驗證，因為失敗的樣子是使用者拖著一張卡片、然後不小心把它打開了。
 
-**子元素的點擊被父層手勢吃掉**：
-```jsx
-<button onPointerDownCapture={e => e.stopPropagation()} />  {/* 一般 React 元件 */}
-<motion.button propagate={{ tap: false }} />                 {/* motion 元件,目前僅支援 tap */}
-```
-motion 的手勢處理是延遲的，在 `onTapStart` 裡呼叫 `e.stopPropagation()` 來不及。
-
-**可拖曳元件內的 tap**：指標移動超過 3px 就會自動取消 tap。
+**拖曳圖片會冒出殘影** → 平台自己的拖放功能在跟你搶。在那個元素上把它關掉。
 
 ---
 
-## 7. SVG
+## 7. 狀態、callback 與生命週期
 
-- **SVG 不支援 layout 動畫**（SVG 沒有 layout 系統）。改直接動屬性（`cx`、`x`、`width`…）或 `viewBox`。
-- SVG `filter` 系元素（`feGaussianBlur` 等）**收不到事件**。把 `whileHover` 掛在父層 `<motion.svg>`，用 variants 驅動 filter 子元素。
-- 路徑繪製用 `pathLength` / `pathSpacing` / `pathOffset`（0–1），支援 `circle` `ellipse` `line` `path` `polygon` `polyline` `rect`。
+**絕對不要把真正的邏輯掛在動畫完成的 callback 上。** 動畫被中斷、被取消，或在降低動態效果下被跳過時，它都不會被呼叫——而這三種情況都很正常。狀態要由觸發動畫的那個事件來驅動，動畫就只負責呈現。判斷準則：如果你把產品裡所有動畫都刪掉，全部的邏輯都應該還是照跑。
 
----
+**動畫和狀態可能各說各話。** 如果「選單是不是開著」的真相來源是動畫，那麼一個被中斷的動畫會讓你落在一個你的模型裡根本不存在的狀態。留著那個布林值，然後往它動過去。
 
-## 8. 常見誤用
-
-| 寫法 | 問題 | 改成 |
-|---|---|---|
-| `import { motion } from "framer-motion"` | 舊套件名 | `"motion/react"` |
-| `transition={{ type: "spring", duration: .3, stiffness: 200 }}` | 設了 stiffness，`duration`/`bounce` 全失效 | 二選一 |
-| `spring({ duration: 0.3 })` | 直接呼叫 `spring()` 時 duration 單位是**毫秒** | `spring({ duration: 300 })` |
-| `useTransform` 寫在 `.map()` 裡 | React hook 規則 | 抽成子元件，或用函式型 `useTransform(() => …)` |
-| `animate` 每 render 傳新物件 | 值相同時不會重播，但物件比較成本存在 | 用 `useMemo` 或 variants |
-| 動畫用 `setTimeout` 串接 | 無法取消、會漂移 | sequence 或 variants 的 `delayChildren` |
-| 依賴 `onAnimationComplete` 做關鍵邏輯 | 動畫被打斷時不會觸發 | 用 state，動畫只是表現層 |
-| RSC 裡 `import { motion } from "motion/react"` | 需要 client boundary | `import * as motion from "motion/react-client"` 或加 `"use client"` |
+**小心每次更新都產生新物件。** 每次更新都傳一個剛建構出來的設定物件，會讓相等性檢查失敗，結果不是動畫一直重播，就是白白付出比較的成本。把它搬出去、memoise 起來，或給它一個 token 名稱。
 
 ---
 
-## 9. 交付前檢查
+## 8. 交付前檢查清單
 
-- [ ] 全站有 `<MotionConfig reducedMotion="user">`？視差與自動播放另外判斷了？
-- [ ] 所有 `whileInView` 都有 `once: true`？
-- [ ] 有沒有動到 `width` / `height` / `top` / `left`？該用 `layout` 的地方用了嗎？
-- [ ] `AnimatePresence` 的 key 穩定唯一？條件在裡面？
-- [ ] 退場時長是進場的 0.5–0.7 倍？
-- [ ] stagger 總時長算過了（間隔 × 數量 ≤ 0.5s）？
-- [ ] **深色主題看過了嗎？** 層級還在嗎？焦點環還看得見嗎？
-- [ ] 在低階裝置或 CPU 降速 4× 下跑過一次？
-- [ ] 分割文字有 `aria-label` 且切片 `aria-hidden`？
-- [ ] 有沒有任何狀態只靠亮度或只靠動畫傳達？
+- [ ] 降低動態效果有全域處理嗎？視差和自動播放有另外分支處理嗎？
+- [ ] 捲動觸發的動畫是不是只觸發一次，門檻也合理？
+- [ ] 有沒有哪裡在動版面層的屬性，其實應該用 transform？
+- [ ] 退場真的有播嗎——id 穩定，而且條件放在保命機制裡面？
+- [ ] 退場時長是進場的 0.5–0.7 倍，距離也更短嗎？
+- [ ] 錯開的算術做過了嗎（間隔 × 數量 ≤ 0.5s）？
+- [ ] 整個產品用的彈跳值是不是只有一個？
+- [ ] **你在深色主題下看過了嗎？** 高度感還看得出來嗎？focus ring 呢？
+- [ ] 每個動畫你都快速連續重新觸發過五次，看過中斷時的行為嗎？
+- [ ] 在低階裝置上跑過一次，或開 4× CPU 降速跑過嗎？
+- [ ] 拆開的文字有帶正確的無障礙標籤，而且片段本身是隱藏的嗎？
+- [ ] 有沒有哪個狀態只靠亮度、或只靠動畫來傳達？

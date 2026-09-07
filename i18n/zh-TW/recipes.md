@@ -1,557 +1,382 @@
-# recipes.md — 可直接使用的配方
+# recipes.md — 25 種模式，以規格書寫
 
-每則都標了**感覺目標**。改參數前先看那一行，確認你要的是不是同一件事。
-全部不依賴 Motion+ 付費元件 —— 需要付費元件才能做的效果，這裡給自足的替代版本。
+每則配方都先講清楚它的**意圖**，接著是一份任何 runtime 都能實作的規格，最後是這個模式最常出錯的
+那一點。這裡沒有任何一則配方會指名某個 API；把數值帶去你自己的 adapter。
 
-React 語法為主；Vue 改寫規則見 `vue.md` §7。
+記法沿用 `SKILL.md` §1：`dur` 以秒為單位，`curve` 是 `out`/`in`/`inout`/`linear`，
+`spring(Dv, b)` 是視覺時長與彈跳量，`travel` 以 px 為單位。
 
 ---
 
-## 0. 全站底座
+## 0. 地基
 
-> 感覺目標：整個產品的動態有一致的性格。
+在動手做其他任何一則之前：依照 `feel.md` §11，把 token 集合定義一次就好。
 
-```jsx
-// motion.tokens.js
-export const T = {
-  instant: { duration: 0.12, ease: "easeOut" },
-  micro:   { duration: 0.2,  ease: "easeOut" },
-  enter:   { type: "spring", visualDuration: 0.3,  bounce: 0.15 },
-  exit:    { duration: 0.15, ease: "easeIn" },
-  layout:  { type: "spring", visualDuration: 0.35, bounce: 0 },
-  page:    { type: "spring", visualDuration: 0.5,  bounce: 0.1 },
-  stagger: 0.04,
-}
 ```
-```jsx
-// app root
-import { MotionConfig } from "motion/react"
-import { T } from "./motion.tokens"
-
-<MotionConfig transition={T.enter} reducedMotion="user">
-  <App />
-</MotionConfig>
+feedback :  dur 0.12   curve out
+micro    :  dur 0.2    curve out
+enter    :  spring(0.3,  0.15)
+exit     :  dur 0.15   curve in
+layout   :  spring(0.35, 0)
+page     :  spring(0.5,  0.1)
+stagger  :  0.04
+lumin    :  dur 0.13   curve out
 ```
+
+底下每一則配方，只要有 token 對得上就一律用 token 寫。**如果你發現自己正在打一個不在這張表上的
+時長，先問問這個案例到底特別在哪** —— 通常一點也不特別。
 
 ---
 
 ## 1. 元素進場
 
-> 感覺目標：新內容「到位」，而不是「飛進來」。
+**意圖：** 有個新東西出現了，而且它是從稍微下面一點的地方來的。
 
-```jsx
-<motion.div
-  initial={{ opacity: 0, y: 8 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={T.enter}
-/>
-```
-位移只用 `8px`。要更明顯就 `12–16px`，**不要超過 24px**。
+| 通道 | 從 → 到 | 時間 |
+|---|---|---|
+| opacity | `0 → 1` | `dur 0.25  curve out` |
+| `y` | `+8px → 0` | `enter` |
 
----
+離場就是它的鏡像：`dur 0.15  curve in`、`y → +4px`。
 
-## 2. 清單 stagger
-
-> 感覺目標：有先後順序，眼睛知道從哪開始讀。
-
-```jsx
-import { motion, stagger } from "motion/react"
-
-const list = {
-  hidden: {},
-  show: { transition: { delayChildren: stagger(0.04) } },
-}
-const item = {
-  hidden: { opacity: 0, y: 8 },
-  show:   { opacity: 1, y: 0 },
-}
-
-<motion.ul variants={list} initial="hidden" animate="show">
-  {items.map(i => <motion.li key={i.id} variants={item} />)}
-</motion.ul>
-```
-**先算總時長**：`0.04 × 項目數 + 0.3` 要 ≤ `0.8s`。超過就把間隔調小。
+**注意：** 是 `y: +8px`，不是 `+40px`。這段距離是在宣告這東西從哪裡來的，而 40px 宣告的是它從
+畫面外飛進來。
 
 ---
 
-## 3. 滾動觸發淡入
+## 2. 清單錯開
 
-> 感覺目標：內容跟著閱讀節奏出現，不干擾捲動。
+**意圖：** 這些項目是一個序列，由上往下讀。
 
-```jsx
-<motion.section
-  initial={{ opacity: 0, y: 16 }}
-  whileInView={{ opacity: 1, y: 0 }}
-  viewport={{ once: true, amount: 0.3 }}
-  transition={T.enter}
-/>
-```
-`once: true` 幾乎永遠要加。
+每個項目套配方 1。間隔用 `stagger`（`0.04`）。容器先淡入，`dur 0.15`。
+
+離場時把方向反過來、間隔減半（`0.02`，從最後一項開始），讓清單往上捲回去。
+
+**注意：** 算一下。`interval × count ≤ 0.5s`。超過 20 個項目就別再逐項錯開，整塊一起淡出淡入。
 
 ---
 
-## 4. 按鈕：位移 + 明暗一起變
+## 3. 捲動觸發淡入
 
-> 感覺目標：可按 → 按下去了。**兩個屬性同向變化才有實體感**（見 `contrast.md` §4）。
+**意圖：** 你捲到這一段，這一段才正要抵達。
 
-```jsx
-<motion.button
-  className="btn"
-  whileHover={{ y: -1 }}
-  whileTap={{ scale: 0.97, y: 0 }}
-  transition={{ type: "spring", visualDuration: 0.15, bounce: 0 }}
-/>
-```
-```css
-.btn {
-  background: var(--surface);
-  box-shadow: var(--shadow-1);
-  transition: box-shadow .15s ease-out, filter .12s ease-out;
-}
-.btn:hover  { box-shadow: var(--shadow-2); }
-.btn:active { box-shadow: var(--shadow-1), inset 0 1px 2px rgb(0 0 0 / .12);
-              filter: brightness(.96); }
-```
+| 通道 | 從 → 到 | 時間 |
+|---|---|---|
+| opacity | `0 → 1` | `dur 0.4  curve out` |
+| `y` | `+12px → 0` | `dur 0.4  curve out` |
+
+在**可見度 30%** 時觸發。只觸發**一次**，之後永不再觸發。
+
+**注意：** 大多數函式庫給你的兩個預設值在這裡都是錯的 —— 它們在露出一個 pixel 時就觸發，而且每次
+經過都重播。兩個都要明確設定。
 
 ---
 
-## 5. 卡片 hover 抬升（長清單也不掉幀）
+## 4. 按鈕：位移與明度一起動
 
-> 感覺目標：靠近使用者。陰影用偽元素的 opacity，不直接動 `box-shadow`。
+**意圖：** 它會回應指標，而且被按下去時是往下陷的。
 
-```jsx
-<motion.article className="card" whileHover={{ y: -4 }}
-  transition={{ type: "spring", visualDuration: 0.2, bounce: 0 }} />
-```
-```css
-.card { position: relative; box-shadow: var(--shadow-2); }
-.card::after {
-  content: ""; position: absolute; inset: 0; border-radius: inherit;
-  box-shadow: var(--shadow-4); opacity: 0;
-  transition: opacity .2s ease-out; pointer-events: none;
-}
-.card:hover::after { opacity: 1; }
-```
+| 狀態 | 通道 | 時間 |
+|---|---|---|
+| hover | `scale 1.02` + 表面亮一階 | `spring(0.15, 0)` / `lumin` |
+| press | `scale 0.97` + brightness `0.96` + 陰影 `e2 → e1` + 頂部內陰影 | `feedback` |
+| focus | 外框環，對周圍 ≥ 3:1 | `feedback` |
+
+**注意：** 按下必須是縮小，不是放大。而且按下狀態在鍵盤觸發時也要出現，不能只有指標。
 
 ---
 
-## 6. Modal（scrim + 內容 + 焦點管理）
+## 5. 卡片 hover 浮起（而且撐得住長清單）
 
-> 感覺目標：世界暗下來，只剩這一件事。
+**意圖：** 這張卡片朝我靠近了。
 
-```jsx
-<AnimatePresence>
-  {open && (
-    <>
-      <motion.div className="scrim" onClick={close}
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        transition={{ duration: 0.2, ease: "easeOut" }} />
-      <motion.div className="dialog" role="dialog" aria-modal="true"
-        initial={{ opacity: 0, scale: 0.96, y: 8 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.98, y: 4, transition: T.exit }}
-        transition={{ type: "spring", visualDuration: 0.28, bounce: 0.1 }} />
-    </>
-  )}
-</AnimatePresence>
-```
-```css
-.scrim  { position: fixed; inset: 0; background: rgb(0 0 0 / .45); }
-.dialog { position: fixed; inset: 0; margin: auto; background: var(--elevated); }
-```
-scrim 先到位（`0.2s`），內容後到（`0.28s`）—— 見 `contrast.md` §5。
+| 通道 | 從 → 到 | 時間 |
+|---|---|---|
+| `y` | `0 → −4px` | `spring(0.2, 0)` |
+| `scale` | `1 → 1.01` | `spring(0.2, 0)` |
+| 陰影 | `e2 → e3` | `lumin` |
+| 表面 | 亮一階 | `lumin` |
+
+**注意：** 在一整排卡片上，不要直接動畫陰影本身。在卡片後面疊第二層、讓它帶著 `e3` 但 opacity 為
+0，然後交叉淡入淡出 —— 見 `contrast.md` §6。另外 scale 就停在 `1.01`，不要用 `1.05`：一張 400px
+的卡片，5% 就是長出 20px，會去擠到旁邊的鄰居。
 
 ---
 
-## 7. 從卡片展開成 Modal（共享元素）
+## 6. 浮層對話框（遮罩 + 內容）
 
-> 感覺目標：這不是新視窗，是同一個東西放大了。**因果表達的最強形式。**
+**意圖：** 其他所有東西都不重要了。
 
-```jsx
-{cards.map(c => (
-  <motion.div key={c.id} layoutId={`card-${c.id}`} onClick={() => setSel(c.id)}>
-    <motion.h3 layoutId={`title-${c.id}`}>{c.title}</motion.h3>
-  </motion.div>
-))}
+規格見 `contrast.md` §4「Modal opening」。摘要：遮罩 `dur 0.2 curve out`，而且**先**到位；對話框
+`spring(0.28, 0.1)`，從 `scale 0.96`、`y +8px` 起跳。離場 `dur 0.15`，遮罩最後才走。
 
-<AnimatePresence>
-  {sel && (
-    <motion.div className="dialog" layoutId={`card-${sel}`}
-                transition={{ type: "spring", visualDuration: 0.35, bounce: 0 }}>
-      <motion.h3 layoutId={`title-${sel}`}>…</motion.h3>
-      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                transition={{ delay: 0.15 }}>…</motion.p>
-    </motion.div>
-  )}
-</AnimatePresence>
-```
-- `layoutId` 要跨兩個元素**一致且唯一**。
-- 內部才有的內容延後 `0.15s` 淡入，等外框先就位。
-- 圓角要寫在 `style` 裡（不是 CSS class）才會被反畸變修正。
+**注意：** 對話框不可以從 `scale 0` 開始。還有，去暗色主題檢查一下遮罩 —— 45% 的黑疊在 `#0E0E10`
+上，什麼都分不出來。
 
 ---
 
-## 8. Dropdown / Popover（從觸發點長出來）
+## 7. 卡片展開成浮層對話框（共享元素）
 
-> 感覺目標：是那顆按鈕生出來的。
+**意圖：** 這個對話框*就是*那張卡片。
 
-```jsx
-<AnimatePresence>
-  {open && (
-    <motion.div
-      style={{ transformOrigin: "top left" }}   // 指向觸發按鈕的方位
-      initial={{ opacity: 0, scale: 0.95, y: -4 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.97, y: -2, transition: T.exit }}
-      transition={{ type: "spring", visualDuration: 0.2, bounce: 0 }}
-    >
-      <motion.ul variants={{ show: { transition: { delayChildren: stagger(0.02) } } }}
-                 initial="hidden" animate="show">…</motion.ul>
-    </motion.div>
-  )}
-</AnimatePresence>
+用 `feel.md` §4 的量測—反推流程：
+
 ```
-`transformOrigin` 要隨開啟方向改（往上開就 `bottom left`）。
+1. measure the card's rect
+2. mount the dialog at its final position and size
+3. measure it
+4. transform the dialog back onto the card's rect (translate + scale)
+5. animate that transform to identity with `layout`
+```
+
+在整段位移的前 60% 內，把卡片內容淡出、對話框內容淡入，兩者交叉。
+
+**注意：** 縮放一個矩形會扭曲它的圓角和文字。用倒數比例把內部內容反向縮放回來，或是只動位置、尺寸
+交給 layout 去變。如果你的 runtime 內建共享元素機制，優先用它 —— 反向縮放它會幫你處理掉。
 
 ---
 
-## 9. Accordion（高度動畫，零 layout thrash）
+## 8. 下拉選單／浮出面板（從觸發元素長出來）
 
-> 感覺目標：內容把空間推開，其他東西順勢讓位。
+**意圖：** 這是從那顆按鈕裡冒出來的。
 
-```jsx
-<motion.div layout onClick={() => setOpen(!open)}>
-  <motion.h3 layout="position">{title}</motion.h3>
-  <AnimatePresence initial={false}>
-    {open && (
-      <motion.div key="body" layout
-        initial={{ opacity: 0, height: 0 }}
-        animate={{ opacity: 1, height: "auto" }}
-        exit={{ opacity: 0, height: 0 }}
-        style={{ overflow: "hidden" }}
-        transition={T.layout} />
-    )}
-  </AnimatePresence>
-</motion.div>
-```
-多個 accordion 互相影響版面時，外層包 `<LayoutGroup>`。
-標題用 `layout="position"` 避免文字被 scale 拉扯。
+| 通道 | 從 → 到 | 時間 |
+|---|---|---|
+| transform origin | 離觸發元素最近的那個角 | — |
+| `scale` | `0.95 → 1` | `spring(0.25, 0.1)` |
+| opacity | `0 → 1` | `dur 0.15  curve out` |
+| `y` | `−4px → 0` | `spring(0.25, 0.1)` |
+
+裡面的項目：`stagger 0.03`，等容器完全打開之後才開始——就是 `feel.md` §6 的「容器先於子項」規則。
+
+**注意：** transform origin 就是這則配方的全部。一個浮出面板明明貼在按鈕底下，卻從自己的中心長
+出來，讀起來就跟那顆按鈕毫無關係。
 
 ---
 
-## 10. Tab 底線（滑過去，不是閃過去）
+## 9. 摺疊面板（高度變化但不拖垮版面）
 
-> 感覺目標：同一條底線移動，不是兩條在交替。
+**意圖：** 面板攤開了。
 
-```jsx
-{tabs.map(t => (
-  <button key={t.id} onClick={() => setActive(t.id)} style={{ position: "relative" }}>
-    {t.label}
-    {active === t.id && (
-      <motion.div layoutId="tab-underline"
-        style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 2 }}
-        transition={{ type: "spring", visualDuration: 0.25, bounce: 0.15 }} />
-    )}
-  </button>
-))}
-```
-多組 tab 在同一頁時，用 `<LayoutGroup id="tabs-a">` 隔開 `layoutId` 命名空間。
+量出內容的自然高度，然後把容器從 `0` 動畫到那個高度 —— 但只要 runtime 允許，就用 **transform**
+做，不要用 height：把一個 wrapper 沿 Y 縮放、內容反向縮放回去，或是用一個以 transform 控制範圍的
+遮罩去裁切。
+
+裡面的內容：opacity `0 → 1`、`dur 0.2`，延後到展開的最後 40% 才進行。
+
+**注意：** 如果非得動畫真的 height，至少量一次就把結果快取起來；每一幀都重新量，就是摺疊面板的
+葬身之地。動畫結束後把 height 設回 `auto`，否則面板之後對內容變化就不會有反應了。
 
 ---
 
-## 11. Toast / 通知堆疊
+## 10. 分頁底線（它是滑過去的，不是閃過去的）
 
-> 感覺目標：從它會停留的角落來，走的時候不擋路。
+**意圖：** 選取狀態從那裡移到了這裡。
 
-```jsx
-<AnimatePresence mode="popLayout">
-  {toasts.map(t => (
-    <motion.div key={t.id} layout
-      initial={{ opacity: 0, x: 24, scale: 0.96 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: 24, scale: 0.96, transition: T.exit }}
-      transition={T.enter} />
-  ))}
-</AnimatePresence>
-```
-`mode="popLayout"` 讓移除者立刻脫離版面，其他 toast 馬上遞補。
-容器要 `position: relative`（`popLayout` 內部用 absolute）。
+一個底線元素，共用。選取改變時，用 `layout` 把它的 `x` 和 `width` 動畫到新分頁的矩形 ——
+`spring(0.35, 0)`。
+
+**注意：** `width` 是版面屬性。改用固定寬度的橫條加 `scaleX`、transform origin 靠左，而且什麼都不
+用反向補償（底線裡沒有內容會被扭曲）。這是唯一一個縮放矩形不用付代價的地方。
+
+---
+
+## 11. 吐司訊息堆疊
+
+**意圖：** 有一則訊息，抵達了它固定待著的那個角落。
+
+| 通道 | 從 → 到 | 時間 |
+|---|---|---|
+| `x`（靠右堆疊時） | `+24px → 0` | `enter` |
+| opacity | `0 → 1` | `dur 0.2 curve out` |
+| 既有的吐司訊息 | 往下移新訊息的高度 | `layout` |
+
+離場：`x → +16px`、opacity `→ 0`、用 `exit` token，剩下的吐司訊息用 `layout` 把空缺補起來。
+
+**注意：** *把空缺補起來*才是讓這疊東西感覺是真的的關鍵。吐司訊息一消失，其他張就瞬移就位，整個
+效果全毀。
 
 ---
 
 ## 12. 拖曳排序
 
-> 感覺目標：抓得起來、放得下去。
+**意圖：** 我正抓著這個，其他人在讓位。
 
-```jsx
-import { Reorder } from "motion/react"
+| 通道 | 值 |
+|---|---|
+| 被抓住的項目 | `scale 1.03`、陰影 `e4`、抬到同層之上、**1:1** 跟著指標 |
+| 其他項目 | 用 `layout` 位移一個槽位 —— `spring(0.35, 0)` |
+| 放開 | 彈到目標槽位，並以放開瞬間的指標速度當初速 |
+| 超出邊界 | 彈性阻力，只吃一半的輸入，再彈回來 |
 
-<Reorder.Group axis="y" values={items} onReorder={setItems}>
-  {items.map(item => (
-    <Reorder.Item key={item.id} value={item}
-      whileDrag={{ scale: 1.03, boxShadow: "0 16px 32px rgb(0 0 0 / .18)", zIndex: 1 }}>
-      {item.label}
-    </Reorder.Item>
-  ))}
-</Reorder.Group>
-```
-自由拖曳版：
-```jsx
-<motion.div drag dragConstraints={boxRef} dragElastic={0.2}
-            whileDrag={{ scale: 1.04 }}
-            dragTransition={{ power: 0.2, modifyTarget: v => Math.round(v / 50) * 50 }} />
-```
-`modifyTarget` ＝ 吸附網格。
+**注意：** 被抓住的項目必須完全精準跟著指標，一點緩動都不能加。手指和物件之間只要有任何平滑處理，
+就毀掉「我抓著它」的錯覺 —— 彈簧是給*其他*項目、以及放開那一下用的。
 
 ---
 
 ## 13. 捲動進度條
 
-```jsx
-const { scrollYProgress } = useScroll()
-const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 })
-<motion.div style={{ scaleX, originX: 0, position: "fixed", top: 0, left: 0, right: 0, height: 3 }} />
-```
+**意圖：** 我讀到哪了。
+
+`scaleX` 從 `0 → 1`，transform origin 靠左，直接綁在捲動進度上，`curve linear`，再用
+`spring(0.2, 0)` 平滑化。
+
+**注意：** 這是唯一一個該用 `linear` 的動畫。它是一個量測值，不是一個動作。
+
+---
 
 ## 14. 視差
 
-> 感覺目標：有景深，不是背景在漂。
+**意圖：** 那一層在比較遠的地方。
 
-```jsx
-const ref = useRef(null)
-const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] })
-const bgY = useTransform(scrollYProgress, [0, 1], ["-12%", "12%"])   // 幅度克制
-const prefersReduced = useReducedMotion()
+背景的 `y` 以前景捲動差值的 `0.3–0.5×` 移動。捲動輸入用 `spring(0.35, 0)` 平滑化。
 
-<div ref={ref}>
-  <motion.img style={{ y: prefersReduced ? 0 : bgY }} />
-</div>
-```
-**視差必須判斷 reduced motion。**
-
-## 15. 水平捲動區
-
-```jsx
-const ref = useRef(null)
-const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] })
-const x = useTransform(scrollYProgress, [0, 1], ["0%", "-75%"])
-
-<div ref={ref} style={{ height: "300vh" }}>
-  <div style={{ position: "sticky", top: 0, height: "100vh", overflow: "hidden" }}>
-    <motion.div style={{ x, display: "flex", gap: 20 }}>…</motion.div>
-  </div>
-</div>
-```
-外層越高，橫向捲動感覺越慢。
-
-## 16. 圖片捲動揭示
-
-```jsx
-const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "center center"] })
-const clipPath = useTransform(scrollYProgress, [0, 1],
-  ["inset(0% 50% 0% 50%)", "inset(0% 0% 0% 0%)"])
-<motion.div ref={ref} style={{ clipPath }}><img src="…" /></motion.div>
-```
+**注意：** 掛載時要把彈簧初始化在當下的捲動位置，否則頁面一載入就會從最上面掃下來。而且在減弱動態
+的情況下要整條分支掉 —— 視差是造成前庭不適最嚴重的頭號兇手。
 
 ---
 
-## 17. 分割文字（免費替代 `splitText`）
+## 15. 水平捲動區塊
 
-> 感覺目標：文字有節奏地出現。**必須保留無障礙可讀性。**
+**意圖：** 垂直捲動帶動水平位移。
 
-```jsx
-function SplitText({ text, className, stagger: s = 0.03 }) {
-  const words = text.split(" ")
-  return (
-    <span aria-label={text} className={className}>
-      {words.map((w, wi) => (
-        <span key={wi} style={{ display: "inline-block", overflow: "hidden", verticalAlign: "bottom" }}>
-          <motion.span aria-hidden style={{ display: "inline-block" }}
-            initial={{ y: "110%" }} animate={{ y: "0%" }}
-            transition={{ delay: wi * s, type: "spring", visualDuration: 0.5, bounce: 0.15 }}>
-            {w}
-          </motion.span>
-          {wi < words.length - 1 && " "}
-        </span>
-      ))}
-    </span>
-  )
-}
-```
-三個非做不可的細節：
-1. **容器 `aria-label` 放原文，切片全部 `aria-hidden`** —— 否則螢幕閱讀器會逐字唸。
-2. 切片要 `display: inline-block`，否則 transform 對 inline 元素無效。
-3. 逐字（`text.split("")`）只用在短標題；長文一律逐詞，否則 DOM 會爆。
-4. 若在掛載時分割，要等 `document.fonts.ready` 再量測換行。
-5. 底部被切到時：加 `padding-bottom: .15em` 配 `margin-bottom: -.15em`。
+用平台原生的 sticky 機制把區塊釘住。把釘住區間的捲動進度 `0 → 1` 映射到軌道的 `x`，
+`0 → −(trackWidth − viewportWidth)`，`curve linear`，再用 `spring(0.3, 0)` 平滑化。
 
-## 18. 逐詞捲動揭示
-
-```jsx
-// One hook per component: useTransform must not be called inside .map()
-function RevealWord({ word, progress, start }) {
-  const opacity = useTransform(progress, [start, start + 0.2], [0.15, 1])
-  return <motion.span aria-hidden style={{ opacity }}>{word}{" "}</motion.span>
-}
-
-function ScrollReveal({ text }) {
-  const ref = useRef(null)
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 0.9", "start 0.25"] })
-  const words = text.split(" ")
-  return (
-    <p ref={ref} aria-label={text}>
-      {words.map((w, i) => (
-        <RevealWord
-          key={i}
-          word={w}
-          progress={scrollYProgress}
-          start={words.length === 1 ? 0 : (i / (words.length - 1)) * 0.8}
-        />
-      ))}
-    </p>
-  )
-}
-```
-最後一個字在 `0.8` 開始、`1.0` 結束 —— 讓揭示在捲完之前完成。
-
-## 19. 打字機（有人類節奏，免費替代 `Typewriter`）
-
-> 感覺目標：像人在打字。**等間隔＝機器人，這是關鍵差異。**
-
-```jsx
-function Typewriter({ text, cps = 22 }) {
-  const [n, setN] = useState(0)
-  const reduced = useReducedMotion()
-  useEffect(() => {
-    if (reduced) { setN(text.length); return }
-    if (n >= text.length) return
-    const ch = text[n]
-    const base = 1000 / cps
-    // 人類節奏:詞中快、詞界慢、標點後停頓、加上隨機抖動
-    const mult = /[.,!?;:]/.test(ch) ? 6 : ch === " " ? 2.2 : 1
-    const jitter = 0.6 + Math.random() * 0.8
-    const id = setTimeout(() => setN(n + 1), base * mult * jitter)
-    return () => clearTimeout(id)
-  }, [n, text, cps, reduced])
-  return (
-    <span aria-label={text} style={{ contain: "layout" }}>
-      <span aria-hidden>{text.slice(0, n)}</span>
-      <motion.span aria-hidden animate={{ opacity: [1, 1, 0, 0] }}
-        transition={{ repeat: Infinity, duration: 1, times: [0, .5, .5, 1], ease: "linear" }}>▍</motion.span>
-    </span>
-  )
-}
-```
-`contain: layout` 限制重排範圍。游標閃爍用 `times` 做方波（不是淡入淡出）。
-
-## 20. 數字計數（免費替代 `AnimateNumber`）
-
-```jsx
-function Counter({ value, format = {} }) {
-  const mv = useMotionValue(0)
-  const ref = useRef(null)
-  const fmt = useMemo(() => new Intl.NumberFormat(undefined, format), [format])
-  useEffect(() => {
-    const controls = animate(mv, value, { duration: 0.8, ease: "easeOut" })
-    const unsub = mv.on("change", v => { if (ref.current) ref.current.textContent = fmt.format(v) })
-    return () => { controls.stop(); unsub() }
-  }, [value])
-  return <span ref={ref} style={{ fontVariantNumeric: "tabular-nums" }} />
-}
-```
-`tabular-nums` 是必要的 —— 否則數字寬度變化會讓版面抖動。
+**注意：** 釘住這件事必須是原生的。從捲動事件裡每一幀寫入位置，會慢合成器一幀，抖動看得一清二楚。
 
 ---
 
-## 21. SVG 線條繪製
+## 16. 捲動揭露圖片
 
-```jsx
-<motion.path d="…" fill="none" stroke="currentColor"
-  initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
-  transition={{ duration: 1.2, ease: "easeInOut" }} />
-```
-支援 `circle` `ellipse` `line` `path` `polygon` `polyline` `rect`。
-另有 `pathSpacing` / `pathOffset`（皆 0–1）可做虛線行進。
+**意圖：** 圖片隨著你捲動被一點一點掀開。
 
----
+動畫一個 **clip**，從 `inset 100% 0 0 0` 到 `inset 0`，映射到元素進場區間的捲動進度，
+`curve linear`。也可以在同一段區間把圖片從 `1.1 → 1` 縮放，讓內容和遮罩以不同速率移動。
 
-## 22. Skeleton 微光
-
-> 感覺目標：「還在載入」。**低對比、慢週期，不搶注意力。**
-
-```jsx
-<motion.div className="skeleton"
-  animate={{ backgroundPosition: ["200% 0", "-200% 0"] }}
-  transition={{ repeat: Infinity, duration: 1.8, ease: "linear" }} />
-```
-```css
-.skeleton {
-  background: linear-gradient(90deg,
-    var(--surface-2) 25%, var(--surface-3) 37%, var(--surface-2) 63%);
-  background-size: 400% 100%;
-}
-```
-`--surface-3` 與 `--surface-2` 的差距要小（淺色主題約 4–6% 明度）。深色主題要更小。
-reduced motion 時直接停在靜態底色。
+**注意：** clip 很便宜；動畫元素的 height 不便宜。另外反向縮放要設上限 —— 從 `1.3` 開始，一開頭
+會糊得很明顯。
 
 ---
 
-## 23. 頁面轉場（Next.js App Router）
+## 17. 文字拆分
 
-```jsx
-"use client"
-import { usePathname } from "next/navigation"
-import { AnimatePresence, motion } from "motion/react"
+**意圖：** 這句話自己組裝起來了。
 
-export function PageTransition({ children }) {
-  const pathname = usePathname()
-  return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.main key={pathname}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0, transition: { duration: 0.25, ease: "easeOut" } }}
-        exit={{ opacity: 0, y: -4, transition: { duration: 0.15, ease: "easeIn" } }}>
-        {children}
-      </motion.main>
-    </AnimatePresence>
-  )
-}
-```
-`mode="wait"` ＋ 進 `easeOut` / 出 `easeIn` ＝ 整體 `easeInOut`。
-頁面轉場總時長控制在 `0.4s` 內，否則導航會感覺遲鈍。
+拆成字元或詞，然後每個片段套配方 1，`stagger 0.02`（字元）或 `0.04`（詞）。
+
+| 字數 | 切分依據 |
+|---|---|
+| ≤ 40 字元 | 字元 |
+| 更多 | 詞 |
+| 一整段 | 行，或乾脆別拆 |
+
+**注意：** 無障礙。要讓容器帶著完整文字當它的無障礙標籤，片段則對輔助科技隱藏，否則螢幕閱讀器會
+把你的標題一個字母一個字母念出來。還有：拆分會讓元素數量膨脹一次，那沒關係 —— 但每次 resize 都
+重拆就有關係了。
 
 ---
 
-## 24. CSS spring（不載入函式庫的執行期）
+## 18. 逐詞捲動揭露
 
-```js
-import { spring } from "motion"
-console.log(spring(0.4, 0.2))   // visualDuration=0.4s, bounce=0.2
-// → "400ms linear(0, 0.009, 0.036, …, 1.02, 1.005, 1)"
-```
-build 時算好貼進 CSS：
-```css
-.card { transition: scale 400ms linear(0, 0.009, …, 1); }
-.card:hover { scale: 1.03; }
-@supports not (transition-timing-function: linear(0, 1)) {
-  .card { transition-timing-function: cubic-bezier(.2,.8,.2,1); }
-}
-```
-執行期零 JS，適合 RSC / Astro / 靜態站。
+**意圖：** 我一邊捲，這段文字一邊被念給我聽。
+
+每個詞的 opacity 從 `0.2 → 1`，映射到整段文字的捲動進度，每個詞的區間依索引錯開，讓一道波穿過
+文字。
+
+**注意：** 靜止值是 `0.2`，不是 `0`，這樣段落的形狀在還沒解析出來之前就看得見。但要看 `contrast.md`
+§7 —— 這裡的 `0.2` 是個*短暫*狀態，不到一秒就過去了。絕對不要把文字長期停在半可讀的 opacity。
 
 ---
 
-## 25. Reduced motion 的分支寫法
+## 19. 帶人味節奏的打字機
 
-```jsx
-const reduced = useReducedMotion()
+**意圖：** 有個人正在打這段字。
 
-// 位移改成純淡入
-const variants = reduced
-  ? { hidden: { opacity: 0 }, show: { opacity: 1 } }
-  : { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }
+每個字元的基礎間隔 `0.045s`，另外：
+- 重複字元 `× 0.5`
+- 逗號後 `+ 0.12s`，句號後 `+ 0.3s`
+- 每個字元加 `± 30%` 隨機抖動
 
-<video autoPlay={!reduced} />
-<motion.div style={{ y: reduced ? 0 : parallaxY }} />
-```
-全站層級用 `<MotionConfig reducedMotion="user">` 就會自動停掉 transform 與 layout 動畫、保留 opacity 與顏色。個別視差、自動播放、無限迴圈仍要手動判斷。
+一台節奏完美規律的打字機讀起來就是機器，剛好和意圖相反。
+
+**注意：** 每一幀都重寫文字內容，等於每一幀都強迫文字重新排版。先把最終尺寸預留出來（固定高度，
+或是放一份隱藏的完整文字撐出方塊），周圍的版面才不會回流 40 次。
+
+---
+
+## 20. 數字動畫
+
+**意圖：** 數值上升了。
+
+補間這個數字，`dur 0.6  curve out`，顯示時取整。用**等寬數字（tabular / monospaced figure）**的
+字型設定，讓每個數字的寬度不會變。
+
+如果要逐位滾動，就把一條 `0–9` 的長條在每個位數上垂直位移，`spring(0.4, 0.1)`，從個位開始
+`0.03` 錯開。
+
+**注意：** 沒有等寬數字的話，數字在跳動時寬度會明顯抖來抖去，讀起來像壞掉而不是有生氣。
+
+---
+
+## 21. 線條描繪
+
+**意圖：** 這道筆畫正在被畫出來。
+
+把筆畫的 dash offset 從「完全隱藏」動畫到「完全畫出」—— `dur 0.8  curve out`，或是映射到捲動。
+多條路徑：`stagger 0.1`。
+
+**注意：** 你需要路徑的總長度。去量，不要猜，而且如果路徑會隨版面變動就要重量一次。
+
+---
+
+## 22. 骨架屏微光
+
+**意圖：** 還在，還在跑。
+
+一條漸層帶掃過佔位區塊，`dur 1.5–2s`、`curve linear`、重複播放，而且這條帶子對佔位區塊的對比要
+非常低 —— 大約 4% 的明度差。
+
+**注意：** 高對比或高速的微光，會跟它正在頂替的內容互相搶戲。還有，1 秒以內什麼都別顯示 ——
+一閃而過的骨架屏，比靜止不動還糟。
+
+---
+
+## 23. 路由／畫面切換
+
+**意圖：** 我移動到另一個地方了。
+
+離場：opacity `1 → 0`、`y → −8px`、`dur 0.15  curve in`。
+進場：opacity `0 → 1`、`y +8px → 0`、`page` token —— 在離場結束**之後**才開始。
+
+**注意：** 兩邊同時跑，等於把兩整個畫面交叉淡化，不管時長多少都是一團糊。把它們排成先後順序。還有，
+如果你的平台提供的切換機制在被中斷時會直接跳到結束狀態，那就別把它用在使用者會連按兩下的返回鍵上。
+
+---
+
+## 24. 彈性邊界
+
+**意圖：** 你到底了，而這個底是一條規則，不是一堵牆。
+
+超過極限之後，只套用**一半**的輸入差值（`offset = overshoot × 0.5`），想講究一點的話，可以讓阻力
+隨著超出量增加而變大。放開時用 `spring(0.4, 0)` 彈回極限，並以放開速度當初速。
+
+**注意：** 阻力係數就是整個手感。設 `1.0` 等於沒有邊界；設 `0.1` 感覺像壞了。`0.5` 是幾乎每個平台
+最後都收斂到的值。
+
+---
+
+## 25. 依減弱動態分支
+
+**意圖：** 同樣的資訊，但不用付出前庭的代價。
+
+| 一般 | 減弱動態 |
+|---|---|
+| `y`、`x`、`scale` 的變化 | 整個拿掉 |
+| opacity、顏色、明度 | **保留**，時長不變 |
+| 視差、綁捲動的位移 | 拿掉；直接顯示結束狀態 |
+| 無限循環、自動播放的影片 | 停掉，並提供啟動它們的控制項 |
+| 共享元素轉場 | 改成交叉淡化 |
+
+**注意：**「減弱」不等於「沒有」。把所有轉場都拔光，使用者就完全沒有畫面已經改變的訊號，那本身就是
+另一種無障礙失敗。淡入淡出要留著。

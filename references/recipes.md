@@ -1,569 +1,403 @@
-# recipes.md — Ready-to-use patterns
+# recipes.md — 25 patterns, as specifications
 
-Each recipe states its **intent**. Read that line before changing parameters, to check you want the
-same thing it wants.
+Each recipe states its **intent** first, then a spec you can implement in any runtime, then the one
+thing that usually goes wrong. No recipe here names an API; take the numbers to your adapter.
 
-None of these depend on paid Motion+ components — where an effect normally needs one, a
-self-contained replacement is given.
-
-React syntax throughout; for Vue, see `vue.md` §7.
+Notation is `SKILL.md` §1: `dur` in seconds, `curve` is `out`/`in`/`inout`/`linear`,
+`spring(Dv, b)` is visual duration and bounce, `travel` in px.
 
 ---
 
 ## 0. The foundation
 
-> Intent: one consistent character across the whole product.
+Before any of the rest: define the token set once, per `feel.md` §11.
 
-```js
-// motion.tokens.js
-export const T = {
-  instant: { duration: 0.12, ease: "easeOut" },
-  micro:   { duration: 0.2,  ease: "easeOut" },
-  enter:   { type: "spring", visualDuration: 0.3,  bounce: 0.15 },
-  exit:    { duration: 0.15, ease: "easeIn" },
-  layout:  { type: "spring", visualDuration: 0.35, bounce: 0 },
-  page:    { type: "spring", visualDuration: 0.5,  bounce: 0.1 },
-  stagger: 0.04,
-}
 ```
-```jsx
-// app root
-import { MotionConfig } from "motion/react"
-import { T } from "./motion.tokens"
+feedback :  dur 0.12   curve out
+micro    :  dur 0.2    curve out
+enter    :  spring(0.3,  0.15)
+exit     :  dur 0.15   curve in
+layout   :  spring(0.35, 0)
+page     :  spring(0.5,  0.1)
+stagger  :  0.04
+lumin    :  dur 0.13   curve out
+```
 
-<MotionConfig transition={T.enter} reducedMotion="user">
-  <App />
-</MotionConfig>
-```
+Every recipe below is written in these tokens where one fits. **If you find yourself typing a
+duration that is not in this list, ask why this case is special** — usually it is not.
 
 ---
 
 ## 1. Element entry
 
-> Intent: new content **arrives**, rather than flying in.
+**Intent:** something new appeared, and it came from slightly below.
 
-```jsx
-<motion.div
-  initial={{ opacity: 0, y: 8 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={T.enter}
-/>
-```
-`8px` of travel. Go to `12–16px` if you want it more pronounced, but **never past 24px**.
+| Channel | From → To | Timing |
+|---|---|---|
+| opacity | `0 → 1` | `dur 0.25  curve out` |
+| `y` | `+8px → 0` | `enter` |
+
+Exit is the mirror at `dur 0.15  curve in`, `y → +4px`.
+
+**Watch out:** `y: +8px` and not `+40px`. The distance is a claim about where the thing came from,
+and 40px claims it came from off-screen.
 
 ---
 
 ## 2. List stagger
 
-> Intent: give the eye an order to read in.
+**Intent:** these items are a sequence, read top to bottom.
 
-```jsx
-import { motion, stagger } from "motion/react"
+Per item: recipe 1. Interval `stagger` (`0.04`). Container fades first, `dur 0.15`.
 
-const list = {
-  hidden: {},
-  show: { transition: { delayChildren: stagger(0.04) } },
-}
-const item = {
-  hidden: { opacity: 0, y: 8 },
-  show:   { opacity: 1, y: 0 },
-}
+Reverse the direction and halve the interval on exit (`0.02`, from last) so the list rolls back up.
 
-<motion.ul variants={list} initial="hidden" animate="show">
-  {items.map(i => <motion.li key={i.id} variants={item} />)}
-</motion.ul>
-```
-**Do the arithmetic first**: `0.04 × count + 0.3` should stay under `0.8s`. If it doesn't, shrink
-the interval.
+**Watch out:** do the arithmetic. `interval × count ≤ 0.5s`. Past 20 items, stop staggering
+individually and fade the block.
 
 ---
 
 ## 3. Scroll-triggered fade
 
-> Intent: content appears in step with reading, without interrupting the scroll.
+**Intent:** this section is arriving as you reach it.
 
-```jsx
-<motion.section
-  initial={{ opacity: 0, y: 16 }}
-  whileInView={{ opacity: 1, y: 0 }}
-  viewport={{ once: true, amount: 0.3 }}
-  transition={T.enter}
-/>
-```
-`once: true` is nearly always required.
+| Channel | From → To | Timing |
+|---|---|---|
+| opacity | `0 → 1` | `dur 0.4  curve out` |
+| `y` | `+12px → 0` | `dur 0.4  curve out` |
+
+Trigger at **30% visible**. Fire **once** and never again.
+
+**Watch out:** the two defaults most libraries give you are both wrong here — they fire at one pixel
+of visibility, and they replay on every pass. Set both explicitly.
 
 ---
 
 ## 4. Button: movement and luminance together
 
-> Intent: pressable → pressed. **Two properties in the same direction is what creates the sense of a
-> physical object** (see `contrast.md` §4).
+**Intent:** it responds to the pointer, and it depresses when pressed.
 
-```jsx
-<motion.button
-  className="btn"
-  whileHover={{ y: -1 }}
-  whileTap={{ scale: 0.97, y: 0 }}
-  transition={{ type: "spring", visualDuration: 0.15, bounce: 0 }}
-/>
-```
-```css
-.btn {
-  background: var(--surface);
-  box-shadow: var(--shadow-1);
-  transition: box-shadow .15s ease-out, filter .12s ease-out;
-}
-.btn:hover  { box-shadow: var(--shadow-2); }
-.btn:active { box-shadow: var(--shadow-1), inset 0 1px 2px rgb(0 0 0 / .12);
-              filter: brightness(.96); }
-```
+| State | Channels | Timing |
+|---|---|---|
+| hover | `scale 1.02` + surface one step brighter | `spring(0.15, 0)` / `lumin` |
+| press | `scale 0.97` + brightness `0.96` + shadow `e2 → e1` + inner shadow top | `feedback` |
+| focus | ring, ≥ 3:1 against surroundings | `feedback` |
+
+**Watch out:** press must shrink, not grow. And the press state must fire on keyboard activation
+too, not just pointer.
 
 ---
 
 ## 5. Card hover lift (that survives a long list)
 
-> Intent: come closer to the user. The shadow goes through a pseudo-element's opacity rather than
-> animating `box-shadow` directly.
+**Intent:** this card came closer to me.
 
-```jsx
-<motion.article className="card" whileHover={{ y: -4 }}
-  transition={{ type: "spring", visualDuration: 0.2, bounce: 0 }} />
-```
-```css
-.card { position: relative; box-shadow: var(--shadow-2); }
-.card::after {
-  content: ""; position: absolute; inset: 0; border-radius: inherit;
-  box-shadow: var(--shadow-4); opacity: 0;
-  transition: opacity .2s ease-out; pointer-events: none;
-}
-.card:hover::after { opacity: 1; }
-```
+| Channel | From → To | Timing |
+|---|---|---|
+| `y` | `0 → −4px` | `spring(0.2, 0)` |
+| `scale` | `1 → 1.01` | `spring(0.2, 0)` |
+| shadow | `e2 → e3` | `lumin` |
+| surface | one step brighter | `lumin` |
+
+**Watch out:** do not animate the shadow itself on a list of cards. Stack a second layer carrying
+`e3` at opacity 0 behind the card and cross-fade that — `contrast.md` §6. Also keep the scale at
+`1.01`, not `1.05`: on a 400px card, 5% is 20px of growth shoving its neighbours.
 
 ---
 
 ## 6. Modal (scrim + content)
 
-> Intent: the world dims; only this remains.
+**Intent:** everything else stopped mattering.
 
-```jsx
-<AnimatePresence>
-  {open && (
-    <>
-      <motion.div className="scrim" onClick={close}
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        transition={{ duration: 0.2, ease: "easeOut" }} />
-      <motion.div className="dialog" role="dialog" aria-modal="true"
-        initial={{ opacity: 0, scale: 0.96, y: 8 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.98, y: 4, transition: T.exit }}
-        transition={{ type: "spring", visualDuration: 0.28, bounce: 0.1 }} />
-    </>
-  )}
-</AnimatePresence>
-```
-```css
-.scrim  { position: fixed; inset: 0; background: rgb(0 0 0 / .45); }
-.dialog { position: fixed; inset: 0; margin: auto; background: var(--elevated); }
-```
-The scrim lands first (`0.2s`), the content second (`0.28s`) — see `contrast.md` §5.
+Spec in `contrast.md` §4 "Modal opening". Summary: scrim `dur 0.2 curve out` and lands **first**;
+dialog `spring(0.28, 0.1)` from `scale 0.96`, `y +8px`. Exit at `dur 0.15`, scrim leaves last.
+
+**Watch out:** the dialog must not start at `scale 0`. And check the scrim in the dark theme — 45%
+black over `#0E0E10` separates nothing.
 
 ---
 
 ## 7. Card expanding into a modal (shared element)
 
-> Intent: this is not a new window, it is the same object enlarged. **The strongest statement of
-> causality available.**
+**Intent:** this modal *is* that card.
 
-```jsx
-{cards.map(c => (
-  <motion.div key={c.id} layoutId={`card-${c.id}`} onClick={() => setSel(c.id)}>
-    <motion.h3 layoutId={`title-${c.id}`}>{c.title}</motion.h3>
-  </motion.div>
-))}
+Use the measure-and-invert procedure in `feel.md` §4:
 
-<AnimatePresence>
-  {sel && (
-    <motion.div className="dialog" layoutId={`card-${sel}`}
-                transition={{ type: "spring", visualDuration: 0.35, bounce: 0 }}>
-      <motion.h3 layoutId={`title-${sel}`}>…</motion.h3>
-      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                transition={{ delay: 0.15 }}>…</motion.p>
-    </motion.div>
-  )}
-</AnimatePresence>
 ```
-- `layoutId` must be identical and unique across the two elements.
-- Interior-only content fades in `0.15s` later, after the frame has settled.
-- Put `borderRadius` in `style` (not a CSS class) so scale correction applies.
+1. measure the card's rect
+2. mount the dialog at its final position and size
+3. measure it
+4. transform the dialog back onto the card's rect (translate + scale)
+5. animate that transform to identity with `layout`
+```
+
+Cross-fade the card's content out and the dialog's in over the first 60% of the movement.
+
+**Watch out:** scaling a rect distorts its corner radius and its text. Counter-scale the inner
+content by the inverse factor, or animate position only and let size change by layout. If your
+runtime has a built-in shared-element mechanism, prefer it — it does this counter-scaling for you.
 
 ---
 
 ## 8. Dropdown / popover (grown from the trigger)
 
-> Intent: this came out of that button.
+**Intent:** this came out of that button.
 
-```jsx
-<AnimatePresence>
-  {open && (
-    <motion.div
-      style={{ transformOrigin: "top left" }}   // point at the trigger
-      initial={{ opacity: 0, scale: 0.95, y: -4 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.97, y: -2, transition: T.exit }}
-      transition={{ type: "spring", visualDuration: 0.2, bounce: 0 }}
-    >
-      <motion.ul variants={{ show: { transition: { delayChildren: stagger(0.02) } } }}
-                 initial="hidden" animate="show">…</motion.ul>
-    </motion.div>
-  )}
-</AnimatePresence>
-```
-`transformOrigin` must follow the opening direction (`bottom left` when it opens upward).
+| Channel | From → To | Timing |
+|---|---|---|
+| transform origin | the corner nearest the trigger | — |
+| `scale` | `0.95 → 1` | `spring(0.25, 0.1)` |
+| opacity | `0 → 1` | `dur 0.15  curve out` |
+| `y` | `−4px → 0` | `spring(0.25, 0.1)` |
+
+Items inside: `stagger 0.03`, beginning only once the container has finished opening — the
+container-before-children rule in `feel.md` §6.
+
+**Watch out:** the transform origin is the entire recipe. A popover that grows from its own centre
+while sitting under a button reads as unrelated to the button.
 
 ---
 
-## 9. Accordion (height animation without layout thrash)
+## 9. Accordion (height without layout thrash)
 
-> Intent: content pushes space open and everything else gives way.
+**Intent:** the panel unrolled.
 
-```jsx
-<motion.div layout onClick={() => setOpen(!open)}>
-  <motion.h3 layout="position">{title}</motion.h3>
-  <AnimatePresence initial={false}>
-    {open && (
-      <motion.div key="body" layout
-        initial={{ opacity: 0, height: 0 }}
-        animate={{ opacity: 1, height: "auto" }}
-        exit={{ opacity: 0, height: 0 }}
-        style={{ overflow: "hidden" }}
-        transition={T.layout} />
-    )}
-  </AnimatePresence>
-</motion.div>
-```
-Wrap several mutually-affecting accordions in `<LayoutGroup>`.
-Use `layout="position"` on the heading so the text is not stretched by scale.
+Measure the content's natural height, then animate the container from `0` to that height — but do it
+as a **transform**, not as a height, wherever the runtime allows: scale a wrapper on Y and
+counter-scale the content, or clip with a mask whose extent is a transform.
+
+Content inside: opacity `0 → 1`, `dur 0.2`, delayed to the last 40% of the open.
+
+**Watch out:** if you must animate real height, at least measure once and cache it; measuring every
+frame is where accordions go to die. Set the height back to `auto` when the animation completes, or
+the panel will not respond to content changes.
 
 ---
 
 ## 10. Tab underline (it slides, it doesn't blink)
 
-> Intent: one underline moving, not two alternating.
+**Intent:** the selection moved from there to here.
 
-```jsx
-{tabs.map(t => (
-  <button key={t.id} onClick={() => setActive(t.id)} style={{ position: "relative" }}>
-    {t.label}
-    {active === t.id && (
-      <motion.div layoutId="tab-underline"
-        style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 2 }}
-        transition={{ type: "spring", visualDuration: 0.25, bounce: 0.15 }} />
-    )}
-  </button>
-))}
-```
-With several tab sets on one page, isolate the `layoutId` namespace with `<LayoutGroup id="tabs-a">`.
+One underline element, shared. On selection change, animate its `x` and `width` to the new tab's
+rect with `layout` — `spring(0.35, 0)`.
+
+**Watch out:** `width` is a layout property. Use `scaleX` on a fixed-width bar with a left transform
+origin, and counter nothing (an underline has no content to distort). This is the one place scaling
+a rect is free.
 
 ---
 
 ## 11. Toast stack
 
-> Intent: arrive from the corner it will rest in; get out of the way when leaving.
+**Intent:** a message arrived at the corner it lives in.
 
-```jsx
-<AnimatePresence mode="popLayout">
-  {toasts.map(t => (
-    <motion.div key={t.id} layout
-      initial={{ opacity: 0, x: 24, scale: 0.96 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: 24, scale: 0.96, transition: T.exit }}
-      transition={T.enter} />
-  ))}
-</AnimatePresence>
-```
-`mode="popLayout"` drops the leaving toast out of flow so the rest close up immediately.
-The container needs `position: relative` (popLayout uses absolute internally).
+| Channel | From → To | Timing |
+|---|---|---|
+| `x` (for a right-side stack) | `+24px → 0` | `enter` |
+| opacity | `0 → 1` | `dur 0.2 curve out` |
+| existing toasts | shift down by the new one's height | `layout` |
+
+Exit: `x → +16px`, opacity `→ 0`, `exit` token, and the remaining toasts close the gap with `layout`.
+
+**Watch out:** the *gap closing* is the part that makes a stack feel real. Toasts that vanish and
+leave the others teleporting into place undo the whole effect.
 
 ---
 
 ## 12. Drag to reorder
 
-> Intent: it can be picked up, and it can be put down.
+**Intent:** I am holding this, and the others are making room.
 
-```jsx
-import { Reorder } from "motion/react"
+| Channel | Value |
+|---|---|
+| held item | `scale 1.03`, shadow `e4`, raised above siblings, follows the pointer **1:1** |
+| other items | shift by one slot with `layout` — `spring(0.35, 0)` |
+| release | spring to the target slot, seeded with the pointer's release velocity |
+| past the edges | elastic resistance, half the input, springs back |
 
-<Reorder.Group axis="y" values={items} onReorder={setItems}>
-  {items.map(item => (
-    <Reorder.Item key={item.id} value={item}
-      whileDrag={{ scale: 1.03, boxShadow: "0 16px 32px rgb(0 0 0 / .18)", zIndex: 1 }}>
-      {item.label}
-    </Reorder.Item>
-  ))}
-</Reorder.Group>
-```
-Free dragging:
-```jsx
-<motion.div drag dragConstraints={boxRef} dragElastic={0.2}
-            whileDrag={{ scale: 1.04 }}
-            dragTransition={{ power: 0.2, modifyTarget: v => Math.round(v / 50) * 50 }} />
-```
-`modifyTarget` snaps to a grid.
+**Watch out:** the held item must track the pointer exactly, with no easing at all. Any smoothing
+between finger and object destroys the illusion of holding it — the spring belongs on the *other*
+items, and on the release.
 
 ---
 
 ## 13. Scroll progress bar
 
-```jsx
-const { scrollYProgress } = useScroll()
-const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 })
-<motion.div style={{ scaleX, originX: 0, position: "fixed", top: 0, left: 0, right: 0, height: 3 }} />
-```
+**Intent:** how far through am I.
+
+`scaleX` from `0 → 1`, transform origin left, bound directly to scroll progress, `curve linear`,
+smoothed with `spring(0.2, 0)`.
+
+**Watch out:** this is the one animation that should be `linear`. It is a measurement, not a
+movement.
+
+---
 
 ## 14. Parallax
 
-> Intent: depth — not a drifting background.
+**Intent:** that layer is further away.
 
-```jsx
-const ref = useRef(null)
-const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] })
-const bgY = useTransform(scrollYProgress, [0, 1], ["-12%", "12%"])   // restrained amplitude
-const prefersReduced = useReducedMotion()
+Background `y` moves at `0.3–0.5×` the scroll delta of the foreground. Smooth the scroll input with
+`spring(0.35, 0)`.
 
-<div ref={ref}>
-  <motion.img style={{ y: prefersReduced ? 0 : bgY }} />
-</div>
-```
-**Parallax must branch on reduced motion.**
+**Watch out:** initialise the spring at the current scroll position on mount, or the page sweeps
+from the top on load. And branch this off entirely under reduced motion — parallax is the single
+worst offender for vestibular discomfort.
+
+---
 
 ## 15. Horizontal scroll section
 
-```jsx
-const ref = useRef(null)
-const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] })
-const x = useTransform(scrollYProgress, [0, 1], ["0%", "-75%"])
+**Intent:** vertical scrolling drives horizontal travel.
 
-<div ref={ref} style={{ height: "300vh" }}>
-  <div style={{ position: "sticky", top: 0, height: "100vh", overflow: "hidden" }}>
-    <motion.div style={{ x, display: "flex", gap: 20 }}>…</motion.div>
-  </div>
-</div>
-```
-A taller outer container makes the horizontal scroll feel slower.
+Pin the section with the platform's native sticky mechanism. Map the pinned region's scroll progress
+`0 → 1` onto the track's `x`, `0 → −(trackWidth − viewportWidth)`, `curve linear`, smoothed with
+`spring(0.3, 0)`.
+
+**Watch out:** the pin must be native. Writing a position every frame from a scroll handler is one
+frame behind the compositor and visibly judders.
+
+---
 
 ## 16. Scroll image reveal
 
-```jsx
-const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "center center"] })
-const clipPath = useTransform(scrollYProgress, [0, 1],
-  ["inset(0% 50% 0% 50%)", "inset(0% 0% 0% 0%)"])
-<motion.div ref={ref} style={{ clipPath }}><img src="…" /></motion.div>
-```
+**Intent:** the image is being uncovered as you scroll.
+
+Animate a **clip** from `inset 100% 0 0 0` to `inset 0`, mapped to scroll progress across the
+element's entry, `curve linear`. Optionally scale the image `1.1 → 1` over the same range so the
+content moves at a different rate from the mask.
+
+**Watch out:** clip is cheap; animating the element's height is not. Also cap the counter-scale — a
+`1.3` start is visibly soft at the beginning.
 
 ---
 
-## 17. Split text (free replacement for `splitText`)
+## 17. Split text
 
-> Intent: text arrives with rhythm. **Accessibility must survive it.**
+**Intent:** the sentence assembled itself.
 
-```jsx
-function SplitText({ text, className, stagger: s = 0.03 }) {
-  const words = text.split(" ")
-  return (
-    <span aria-label={text} className={className}>
-      {words.map((w, wi) => (
-        <span key={wi} style={{ display: "inline-block", overflow: "hidden", verticalAlign: "bottom" }}>
-          <motion.span aria-hidden style={{ display: "inline-block" }}
-            initial={{ y: "110%" }} animate={{ y: "0%" }}
-            transition={{ delay: wi * s, type: "spring", visualDuration: 0.5, bounce: 0.15 }}>
-            {w}
-          </motion.span>
-          {wi < words.length - 1 && " "}
-        </span>
-      ))}
-    </span>
-  )
-}
-```
-Five details that are not optional:
-1. **The container carries the original string in `aria-label`; every fragment is `aria-hidden`** —
-   otherwise a screen reader spells it out letter by letter.
-2. Fragments need `display: inline-block`; transforms do not apply to inline boxes.
-3. Per-character (`text.split("")`) is for short headings only. Long copy must go per word or the
-   DOM explodes.
-4. When splitting on mount, wait for `document.fonts.ready` before measuring line breaks.
-5. If descenders clip, add `padding-bottom: .15em` with a matching `margin-bottom: -.15em`.
+Split into characters or words, then apply recipe 1 per fragment with `stagger 0.02` (characters) or
+`0.04` (words).
+
+| Count | Split by |
+|---|---|
+| ≤ 40 characters | characters |
+| more | words |
+| a paragraph | lines, or don't split |
+
+**Watch out:** accessibility. The container carries the full text as its accessible label and the
+fragments are hidden from assistive technology, or a screen reader will read your headline one
+letter at a time. Also: splitting inflates the element count once, which is fine — but re-splitting
+on every resize is not.
+
+---
 
 ## 18. Word-by-word scroll reveal
 
-```jsx
-// One hook per component: useTransform must not be called inside .map()
-function RevealWord({ word, progress, start }) {
-  const opacity = useTransform(progress, [start, start + 0.2], [0.15, 1])
-  return <motion.span aria-hidden style={{ opacity }}>{word}{" "}</motion.span>
-}
+**Intent:** the paragraph is being read to me as I scroll.
 
-function ScrollReveal({ text }) {
-  const ref = useRef(null)
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 0.9", "start 0.25"] })
-  const words = text.split(" ")
-  return (
-    <p ref={ref} aria-label={text}>
-      {words.map((w, i) => (
-        <RevealWord
-          key={i}
-          word={w}
-          progress={scrollYProgress}
-          start={words.length === 1 ? 0 : (i / (words.length - 1)) * 0.8}
-        />
-      ))}
-    </p>
-  )
-}
-```
-The last word starts at `0.8` and finishes at `1.0`, so the reveal completes before the scroll does.
+Each word's opacity goes `0.2 → 1`, mapped to scroll progress across the paragraph, with each word's
+range offset by its index so a wave passes through the text.
 
-## 19. Typewriter with human rhythm (free replacement for `Typewriter`)
-
-> Intent: it looks like a person typing. **Even intervals read as a robot — that is the whole
-> difference.**
-
-```jsx
-function Typewriter({ text, cps = 22 }) {
-  const [n, setN] = useState(0)
-  const reduced = useReducedMotion()
-  useEffect(() => {
-    if (reduced) { setN(text.length); return }
-    if (n >= text.length) return
-    const ch = text[n]
-    const base = 1000 / cps
-    // human rhythm: fast mid-word, slower at boundaries, a real pause after punctuation, plus jitter
-    const mult = /[.,!?;:]/.test(ch) ? 6 : ch === " " ? 2.2 : 1
-    const jitter = 0.6 + Math.random() * 0.8
-    const id = setTimeout(() => setN(n + 1), base * mult * jitter)
-    return () => clearTimeout(id)
-  }, [n, text, cps, reduced])
-  return (
-    <span aria-label={text} style={{ contain: "layout" }}>
-      <span aria-hidden>{text.slice(0, n)}</span>
-      <motion.span aria-hidden animate={{ opacity: [1, 1, 0, 0] }}
-        transition={{ repeat: Infinity, duration: 1, times: [0, .5, .5, 1], ease: "linear" }}>▍</motion.span>
-    </span>
-  )
-}
-```
-`contain: layout` bounds the reflow. The cursor blinks as a square wave via `times`, not a fade.
-
-## 20. Animated number (free replacement for `AnimateNumber`)
-
-```jsx
-function Counter({ value, format = {} }) {
-  const mv = useMotionValue(0)
-  const ref = useRef(null)
-  const fmt = useMemo(() => new Intl.NumberFormat(undefined, format), [format])
-  useEffect(() => {
-    const controls = animate(mv, value, { duration: 0.8, ease: "easeOut" })
-    const unsub = mv.on("change", v => { if (ref.current) ref.current.textContent = fmt.format(v) })
-    return () => { controls.stop(); unsub() }
-  }, [value])
-  return <span ref={ref} style={{ fontVariantNumeric: "tabular-nums" }} />
-}
-```
-`tabular-nums` is mandatory — without it the changing digit widths make the layout jitter.
+**Watch out:** the resting value is `0.2`, not `0`, so the paragraph's shape is visible before it
+resolves. But see `contrast.md` §7 — `0.2` is a *transient* state here, passing in under a second.
+Never leave text parked at a half-readable opacity.
 
 ---
 
-## 21. SVG line drawing
+## 19. Typewriter with human rhythm
 
-```jsx
-<motion.path d="…" fill="none" stroke="currentColor"
-  initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
-  transition={{ duration: 1.2, ease: "easeInOut" }} />
-```
-Supports `circle` `ellipse` `line` `path` `polygon` `polyline` `rect`.
-`pathSpacing` and `pathOffset` (both 0–1) produce marching dashes.
+**Intent:** someone is typing this.
+
+Base interval `0.045s` per character, with:
+- `× 0.5` for a repeated character
+- `+ 0.12s` after a comma, `+ 0.3s` after a full stop
+- `± 30%` random jitter per character
+
+A perfectly regular typewriter reads as a machine, which is the opposite of the intent.
+
+**Watch out:** rewriting the text content every frame forces a text re-layout every frame. Reserve
+the final size up front (a fixed height, or a hidden full-text copy setting the box) so the
+surrounding layout does not reflow 40 times.
+
+---
+
+## 20. Animated number
+
+**Intent:** the value went up.
+
+Tween the number, `dur 0.6  curve out`, rounding for display. Format with a **tabular / monospaced
+figure style** so digit widths do not change.
+
+For a per-digit roll, translate a strip of `0–9` vertically per digit place with `spring(0.4, 0.1)`,
+staggered `0.03` from the least significant digit.
+
+**Watch out:** without tabular figures the number visibly jitters in width as it counts, which reads
+as broken rather than lively.
+
+---
+
+## 21. Line drawing
+
+**Intent:** the stroke is being drawn.
+
+Animate the stroke's dash offset from "fully hidden" to "fully drawn" — `dur 0.8  curve out`, or
+mapped to scroll. Multiple paths: `stagger 0.1`.
+
+**Watch out:** you need the path's total length. Measure it rather than guessing, and re-measure if
+the path is responsive.
 
 ---
 
 ## 22. Skeleton shimmer
 
-> Intent: "still loading". **Low contrast, slow period, no competition for attention.**
+**Intent:** still here, still working.
 
-```jsx
-<motion.div className="skeleton"
-  animate={{ backgroundPosition: ["200% 0", "-200% 0"] }}
-  transition={{ repeat: Infinity, duration: 1.8, ease: "linear" }} />
-```
-```css
-.skeleton {
-  background: linear-gradient(90deg,
-    var(--surface-2) 25%, var(--surface-3) 37%, var(--surface-2) 63%);
-  background-size: 400% 100%;
-}
-```
-Keep `--surface-3` close to `--surface-2` (about 4–6% lightness apart in a light theme; even closer
-in dark). Under reduced motion, settle on the flat base colour.
+A gradient band sweeping across the placeholder, `dur 1.5–2s`, `curve linear`, repeating, with the
+band at very low contrast against the placeholder — around a 4% luminance difference.
+
+**Watch out:** high-contrast or fast shimmer competes with the content it is standing in for. And
+show nothing at all under 1 second — a skeleton that flashes is worse than a still moment.
 
 ---
 
-## 23. Page transition (Next.js App Router)
+## 23. Route / screen transition
 
-```jsx
-"use client"
-import { usePathname } from "next/navigation"
-import { AnimatePresence, motion } from "motion/react"
+**Intent:** I moved to a different place.
 
-export function PageTransition({ children }) {
-  const pathname = usePathname()
-  return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.main key={pathname}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0, transition: { duration: 0.25, ease: "easeOut" } }}
-        exit={{ opacity: 0, y: -4, transition: { duration: 0.15, ease: "easeIn" } }}>
-        {children}
-      </motion.main>
-    </AnimatePresence>
-  )
-}
-```
-`mode="wait"` plus `easeOut` in / `easeIn` out composes to an overall `easeInOut`.
-Keep the whole transition under `0.4s` or navigation starts to feel sluggish.
+Outgoing: opacity `1 → 0`, `y → −8px`, `dur 0.15  curve in`.
+Incoming: opacity `0 → 1`, `y +8px → 0`, `page` token — **after** the outgoing has finished.
+
+**Watch out:** running both at once cross-fades two full screens, which is muddy at any duration.
+Sequence them. And if the transition mechanism your platform provides snaps to the end state when
+interrupted, do not use it for a back button people press twice.
 
 ---
 
-## 24. CSS springs (no library at runtime)
+## 24. Elastic boundary
 
-```js
-import { spring } from "motion"
-console.log(spring(0.4, 0.2))   // visualDuration=0.4s, bounce=0.2
-// → "400ms linear(0, 0.009, 0.036, …, 1.02, 1.005, 1)"
-```
-Compute at build time and paste into CSS:
-```css
-.card { transition: scale 400ms linear(0, 0.009, …, 1); }
-.card:hover { scale: 1.03; }
-@supports not (transition-timing-function: linear(0, 1)) {
-  .card { transition-timing-function: cubic-bezier(.2,.8,.2,1); }
-}
-```
-Zero runtime JS — ideal for RSC, Astro, and static sites.
+**Intent:** you have reached the edge, and the edge is a rule rather than a wall.
+
+Past the limit, apply **half** the input delta (`offset = overshoot × 0.5`), with resistance rising
+as the overshoot grows if you want to be fancy. On release, `spring(0.4, 0)` back to the limit,
+seeded with the release velocity.
+
+**Watch out:** the resistance factor is the whole feel. At `1.0` there is no boundary; at `0.1` it
+feels broken. `0.5` is the value nearly every platform converged on.
 
 ---
 
 ## 25. Branching on reduced motion
 
-```jsx
-const reduced = useReducedMotion()
+**Intent:** the same information, without the vestibular cost.
 
-// replace displacement with a plain fade
-const variants = reduced
-  ? { hidden: { opacity: 0 }, show: { opacity: 1 } }
-  : { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }
+| Normal | Reduced |
+|---|---|
+| `y`, `x`, `scale` changes | dropped entirely |
+| opacity, colour, brightness | **kept**, at the same durations |
+| parallax, scroll-linked movement | dropped; show the end state |
+| infinite loops, autoplaying video | stopped, with a control to start them |
+| shared-element transitions | replaced by a cross-fade |
 
-<video autoPlay={!reduced} />
-<motion.div style={{ y: reduced ? 0 : parallaxY }} />
-```
-`<MotionConfig reducedMotion="user">` handles the site-wide case by disabling transform and layout
-animations while preserving opacity and colour. Parallax, autoplay and infinite loops still need an
-explicit branch.
+**Watch out:** "reduced" does not mean "none". Removing every transition leaves the user with no
+signal that the screen changed, which is its own accessibility failure. Keep the fade.

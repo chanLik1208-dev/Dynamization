@@ -1,251 +1,218 @@
 # pitfalls.md — Symptom → cause → fix
 
-Look up the symptom, then read the section.
+Look up the symptom, then read the section. The causes are grouped by *mechanism*, not by API, so
+they transfer between runtimes — a dropped exit animation has the same three causes in a web
+framework, a game engine, and a native toolkit.
 
 | Symptom | Most likely cause |
 |---|---|
-| Exit animation never fires | `AnimatePresence` unmounted itself, or the child `key` is unstable → §1 |
-| Animation restarts from scratch every time | the component is being recreated (key changed, or `motion.create` inside render) → §2 |
-| Layout animation does nothing | the element is `display: inline`, or there was no re-render → §3 |
-| Content stretches during a layout animation | children lack `layout`, or radius/shadow are not in `style` → §3 |
-| The whole page jitters while scrolling | the scrollbar appearing triggers a layout animation → §3 |
-| Dropped frames, jank | animating a layout-triggering property, or a large paint → §4 |
-| Scroll-linked values step visibly | not passed through `useSpring` → §5 |
-| Drag distance doesn't match the finger | a transformed / scaled ancestor → §6 |
-| Hover gets "stuck" on touch devices | native hover events instead of Motion's `hover()` / `whileHover` → §6 |
-| SVG layout animation is broken | SVG does not support layout animations → §7 |
-| Elevation disappears in dark mode | shadows are invisible on dark surfaces → `contrast.md` §2 |
+| Exit animation never fires | the thing was destroyed before it could animate → §1 |
+| Animation restarts from the beginning on every trigger | the animated object is being recreated, or you re-target from the nominal start → §2 |
+| Reversal stutters or slams to a halt | velocity is not being carried; Tier 2 behaviour → §2 |
+| Reflow animation does nothing | nothing told the system the layout changed, or the element type cannot be transformed → §3 |
+| Content stretches or the corner radius goes oval | a rect is being scaled without counter-scaling its content → §3 |
+| The whole page jitters while scrolling | a scrollbar or safe-area appearing is triggering a reflow animation → §3 |
+| Dropped frames, jank | animating a layout- or paint-tier property → §4 |
+| Scroll-linked values step visibly | raw scroll input, not smoothed → §5 |
+| The screen sweeps from the top on load | a scroll-driven spring initialised at zero → §5 |
+| Drag distance doesn't match the pointer | a transformed or scaled ancestor changed the coordinate space → §6 |
+| Hover gets "stuck" on touch devices | synthesised hover events → §6 |
+| The animation finished but the state didn't change | logic hung off a completion callback that never fired → §7 |
+| Elevation disappears in the dark theme | shadows are invisible on dark surfaces → `contrast.md` §2 |
 | Mid-animation text is unreadable | intermediate contrast too low → `contrast.md` §7 |
 
 ---
 
-## 1. `AnimatePresence` and exits
+## 1. Exits that never happen
 
-**Three reasons an exit never fires:**
+An exit animation is a contradiction: you are animating something that, logically, no longer exists.
+Every runtime needs a mechanism to keep it alive for the duration, and **the failure is always one
+of three things**:
 
-```jsx
-// ❌ AnimatePresence unmounts itself and cannot animate its own departure
-{isVisible && <AnimatePresence><Component /></AnimatePresence>}
+1. **The keep-alive is inside the thing being removed.** If the wrapper responsible for deferring
+   the destruction is itself destroyed by the same condition, nothing survives to animate. The
+   keep-alive must sit **outside** the conditional, and the condition must sit inside it.
+2. **Identity is unstable.** The system tracks "which item is which" by some key. If that key is a
+   positional index, then removing item 2 makes item 3 *become* item 2, and the system sees an
+   update rather than a removal. Use a stable, unique id.
+3. **The exiting thing is not a direct child of the keep-alive.** One inert wrapper in between and
+   the mechanism cannot see it. Check the actual tree, not the source tree.
 
-// ✅ The condition goes inside
-<AnimatePresence>{isVisible && <Component />}</AnimatePresence>
-```
+**Nested exits** are their own trap: when a whole subtree is removed at once, children usually do
+**not** get to play their own exits — the parent finishes first and takes them with it. If you need
+the children to leave first, sequence it explicitly (`feel.md` §6: content clears, *then* the
+container closes).
 
-```jsx
-// ❌ index as key: reordering breaks the item↔key association
-{items.map((item, i) => <Component key={i} />)}
-// ✅ stable, unique id
-{items.map(item => <Component key={item.id} />)}
-```
-
-**The exiting component must be a direct child of `AnimatePresence`** to receive `exit`. One
-non-motion wrapper in between and it stops working.
-
-**Nested `AnimatePresence`**: when the outer one is removed, inner children do **not** play their
-exits by default. Add `propagate` to the inner one:
-```jsx
-<AnimatePresence propagate>…</AnimatePresence>
-```
-
-**Two requirements for `mode="popLayout"`:**
-- Custom-component children must `forwardRef` and pass the ref to the node being popped
-- The animating parent needs a non-`static` `position` — popLayout uses `position: absolute`
-  internally, and any transformed ancestor becomes the offset parent
-
-```jsx
-<motion.ul layout style={{ position: "relative" }}>
-  <AnimatePresence mode="popLayout">…</AnimatePresence>
-</motion.ul>
-```
-
-**Mixing `mode="sync"` with layout animations**: wrap the group in `<LayoutGroup>` so components
-outside the `AnimatePresence` know to reflow.
+**Design test:** if you cannot name the mechanism that keeps the element alive during its exit, you
+do not have an exit animation yet. Find it in your adapter before designing one.
 
 ---
 
-## 2. Components being recreated
+## 2. Restarts, recreation, and lost velocity
 
-```jsx
-// ❌ a brand-new component every render; all animation state is lost
-function Row() {
-  const MotionCard = motion.create(Card)   // disaster
-  return <MotionCard animate={…} />
-}
-// ✅ hoist to module scope
-const MotionCard = motion.create(Card)
-```
+**The animated object is being recreated.** Anything constructed inside a render/update function is
+a new object every frame or every update, and it carries none of the previous one's animation
+state. Hoist the construction out. This is the single most common cause of "it animates the first
+time and then never again", and it has the same shape in every declarative UI system.
 
-A `motion.create()` wrapper must forward `ref` to the DOM node that actually animates (React 18:
-`forwardRef`; React 19: `props.ref`). Without it, nothing moves.
+**You are re-targeting from the nominal start.** When an animation is re-triggered mid-flight, the
+new animation must begin at the **current** value, not at the declared start value. Read the current
+value first. Anything that says "animate from A to B" when the element is currently at some point
+between them will snap back to A, and the snap is exactly at the moment the user acted.
 
-Animation snapping back to the start on interruption: write `null` as the first keyframe.
-```jsx
-animate={{ x: [null, 100, 0] }}
-```
+**Velocity is not being carried.** This is Tier 2 behaviour (`SKILL.md` §2) and it is not a bug, it
+is a missing capability. Three ways out, in order:
+
+- Hand-integrate the spring for the interactions that are actually gesture-driven — `spring.md` §3.
+- Keep `b ≤ 0.15` so a zero-velocity restart is not visibly different from a continuation.
+- Keep re-triggerable animations at `dur ≤ 0.2s`, below the threshold where a restart is noticeable.
+
+**Do not mix parameter systems.** If your runtime accepts both a duration and a stiffness, setting
+one usually makes the other inert — silently. Pick one vocabulary (`Dv`/`b`, converting at the
+boundary) and never set the other.
 
 ---
 
-## 3. Layout animations
+## 3. Reflow and shared-element animations
 
 **Nothing happens:**
-- The element is `display: inline` — browsers do not apply transforms to inline boxes. Use
-  `inline-block` / `block` / `flex`.
-- There was no re-render. Layout animations are triggered by React renders; a pure CSS change does
-  not trigger one.
-- Two components affect each other's layout but render separately → wrap them in `<LayoutGroup>`.
 
-**Change layout through `style` / `className`, not `animate`:**
-```jsx
-// ❌ layout and animate fight each other
-<motion.div layout animate={{ width: open ? 300 : 100 }} />
-// ✅ let layout handle it
-<motion.div layout style={{ width: open ? 300 : 100 }} />
-```
+- **The element type cannot be transformed.** Inline text boxes, some layout-managed containers, and
+  many 2D UI nodes ignore transforms entirely. Change the element to one that can be transformed.
+- **Nothing told the system the layout changed.** Reflow animations work by comparing a *before* and
+  an *after* measurement, and something must trigger that comparison. A change that bypasses the
+  system's update cycle produces no comparison and therefore no animation.
+- **Two elements affect each other's layout but are updated separately.** They need to be measured
+  in the same pass, or one will animate to a position the other has not yet vacated.
 
-**Content stretching (scale distortion):**
-- Add `layout` to direct children too — Motion applies inverse scaling
-- For elements whose aspect ratio changes (images, text), use `layout="position"`
-- **`borderRadius` and `boxShadow` must be set in `style`** to be scale-corrected; in a CSS class
-  they will not be
-- `border` cannot be corrected perfectly (a 1px floor) → use a padded parent as the border instead
+**Drive layout through layout, not through the animation system.** Setting a size via an animation
+*and* letting the reflow system animate the same size is two systems fighting over one number. Let
+the layout change instantly and let the reflow mechanism animate the visual difference.
 
-```jsx
-<motion.div layout style={{ borderRadius: 10, padding: 5, background: "#000" }}>
-  <motion.div layout style={{ borderRadius: 5, background: "#fff" }} />
-</motion.div>
-```
+**Content stretching (scale distortion).** A rect animated by scaling distorts everything inside it:
+text stretches, corner radii go oval, borders change width. Fixes, in order of preference:
 
-**Inside a scroll container**: add `layoutScroll` to the container.
-**Inside `position: fixed`**: add `layoutRoot`.
+- Counter-scale the direct children by the inverse factor.
+- For elements whose aspect ratio changes (images, text blocks), animate **position only** and let
+  the size change instantly.
+- **Corner radius and shadow must be values the animation system can see** to be corrected. A radius
+  buried in a stylesheet or a static asset cannot be counter-scaled.
+- A border cannot be corrected perfectly — there is a one-pixel floor. Use a padded parent as the
+  border instead.
 
-**Layout animations are disabled during horizontal window resize** — that is deliberate performance
-protection, not a bug.
+**Inside a scroll container or a fixed-position layer**, the before/after measurements are taken in
+different coordinate spaces unless you tell the system about the container. Both cases usually need
+an explicit opt-in.
 
-**Page jitter when the scrollbar appears:**
-```css
-body { overflow-y: auto; scrollbar-gutter: stable; }
-```
+**Page jitter while scrolling** is almost always a scrollbar or safe-area inset appearing and
+disappearing, which changes the content width, which triggers a reflow animation on everything.
+Reserve the gutter permanently.
 
-**Relative positioning in nested layout animations**: Motion computes **parent-relative** positions
-(unlike View Transitions, which use page-absolute coordinates), so a delayed child is never left
-behind by its parent. Change the anchor with `layoutAnchor={{ x: 0.5, y: 0.5 }}`.
+**A note on coordinates:** a reflow mechanism that computes **parent-relative** positions keeps a
+delayed child attached to its moving parent. One that computes **page-absolute** positions will
+leave the child behind. If your child transitions look detached from their parent, this is why.
 
 ---
 
 ## 4. Performance
 
-**Always safe**: `transform` (including independent `x` / `scale` / `rotate`), `opacity`
-**Triggers paint (measure it)**: `box-shadow`, `border-radius`, `background-color`, `filter`
-**Triggers layout (avoid)**: `width`, `height`, `top`, `left`, `margin`, `padding`, `border-width`
+**Always safe**: transform (translate / scale / rotate), opacity
+**Paint tier — measure it**: shadows, corner radius, background colour, filters
+**Layout tier — avoid**: width, height, top, left, margin, padding, border width
 
-Substitutions:
-```js
-animate(el, { boxShadow: "10px 10px black" })          // ❌ paint
-animate(el, { filter: "drop-shadow(10px 10px black)" })// ✅ compositor (Chrome/FF)
+The universal substitution: **do not animate the expensive property, cross-fade two pre-rendered
+states of it.** A blurred shadow becomes a stacked overlay whose opacity animates. A corner radius
+becomes two masks. A backdrop blur becomes two pre-blurred copies. This costs memory and buys
+frames — `contrast.md` §6.
 
-animate(el, { borderRadius: "50px" })                  // ❌
-animate(el, { clipPath: "inset(0 round 50px)" })       // ✅
-```
-For large-area shadow animation, use the pseudo-element opacity trick → `recipes.md` §5.
+Where a clip or mask is available it is usually cheaper than the property it replaces: clipping to a
+rounded rect beats animating a radius, and clipping a reveal beats animating a height.
 
-**A surprise about hardware acceleration**: Motion's independent transforms (`x`, `scale`) are
-implemented with CSS variables and are **not** hardware accelerated today. On a busy main thread
-they can still stutter. When it truly matters, write the full string:
-```js
-animate(".box", { transform: "translateX(100px) scale(2)" })
-```
-Chrome also spent a long time refusing to accelerate `%`-based transforms.
+**Be sparing with layer hints.** Every "promote this to its own layer" hint costs GPU memory, and a
+page full of them is slower than a page with none. Add them only to elements you have measured.
 
-**Be sparing with layer hints**: every `will-change: transform` costs GPU memory. Add it only to
-elements you have measured.
-
-**Text animation**: splitting text inflates the DOM (a one-time cost), but updating `innerText`
-every frame triggers **continuous** layout recalculation. Use a monospace font for scramble effects
-and `contain: layout` for typewriters. **Per-character blur is a performance trap** — small layers
-blown up by a blur overlap each other, costing far more GPU than one blur on the whole block.
+**Text is the expensive case.** Splitting text into fragments inflates the object count *once*,
+which is fine. Rewriting text content every frame triggers **continuous** text layout, which is not.
+Reserve the final size up front, and use a fixed-advance font for scramble effects so the box never
+re-measures. **Per-character blur is a specific trap** — many small layers, each blown up by its
+blur radius, overlap heavily and cost far more than one blur over the whole block.
 
 ---
 
 ## 5. Scroll
 
-- Scroll input is discrete; binding `scrollYProgress` straight to a style produces stepping. Always
-  pass it through `useSpring`.
-- When springing a scroll value, add `skipInitialAnimation: true` to avoid sweeping from 0 on mount.
-- Pin with CSS `position: sticky`, never by mutating `top` in JS.
-- `whileInView` without `once: true` replays constantly; the default `amount: "some"` (one pixel) is
-  usually too early — use `0.3`.
-- `useScroll`'s `offset` is `[start, end]`, each written as `"<target position> <container position>"`.
-  `"start end"` means *the target's top meets the container's bottom*.
+- Scroll input is discrete. Binding it straight to a transform produces stepping. Always smooth it
+  through a spring — `feel.md` §7.
+- **Initialise that spring at the current scroll value**, or the screen sweeps from the top on load.
+  This one ships to production constantly because it does not reproduce during development, where
+  you are already at the top of the page.
+- Pin with the platform's native sticky mechanism, never by writing a position from a scroll
+  handler. A handler-driven pin is one frame behind the compositor and visibly judders.
+- Scroll-triggered animations need an explicit **fire-once** flag and an explicit **threshold**
+  (~30% visible). Both defaults are usually wrong.
+- Be precise about what "progress" means. Most scroll APIs express the range as two pairs of
+  positions — a point on the target and a point on the container — and getting the pairing backwards
+  gives you an animation that is over before the element is on screen, or one that never completes.
 
 ---
 
-## 6. Gestures
+## 6. Gestures and coordinate spaces
 
-**Drag distance doesn't track the pointer** → a transformed or scaled ancestor. Any ancestor with a
-transform changes the coordinate system. `MotionConfig`'s `transformPagePoint` can correct a
-whole-page zoom.
+**Drag doesn't track the pointer** → an ancestor carries a transform or a scale, so pointer
+coordinates and element coordinates are in different spaces. Either divide the pointer delta by the
+accumulated scale, or convert the pointer position into the element's local space before using it.
+The same cause breaks reflow animations inside a scaled parent.
 
-**Layout animations misbehaving inside a scaled parent** → same cause.
+**Hover "sticks" on touch devices** → touch input synthesises hover events that never get a matching
+exit. Use the platform's filtered hover signal if it has one; otherwise clear the hover state on
+touch-end yourself, and gate hover effects on a "device has a real pointer" query.
 
-**Browser ghost image when dragging an image** → add `draggable={false}` or CSS
-`-webkit-user-drag: none`.
+**A drag fights the scroll on touch** → the platform needs to be told, before the gesture starts,
+which axis you own. Declare it up front; deciding after the first move event is always too late,
+because the scroll has already begun.
 
-**Hover "sticks" on touch devices** → browsers emulate hover events for touch. Use `whileHover` /
-`hover()`, which filter the fakes. Do not bind `mouseenter` yourself.
+**A child's tap is swallowed by a parent gesture** → gesture systems commonly defer their handling
+to the end of the input pass, which means stopping propagation from inside a gesture callback is too
+late. Stop it at the raw pointer-down, or use whatever explicit "do not propagate this gesture"
+option the system offers.
 
-**Pan / drag unresponsive or fighting the scroll on touch** → you need CSS `touch-action`:
-```css
-.draggable-x { touch-action: pan-y; }   /* horizontal drag, vertical left to scrolling */
-.draggable   { touch-action: none; }
-```
+**Taps firing at the end of a drag** → cancel the tap once the pointer has moved more than about 3px.
+Most systems do this for you; verify it, because the failure is a user dragging a card and
+accidentally opening it.
 
-**A child's click swallowed by a parent gesture**:
-```jsx
-<button onPointerDownCapture={e => e.stopPropagation()} />  {/* plain React component */}
-<motion.button propagate={{ tap: false }} />                 {/* motion component, tap only for now */}
-```
-Motion's gesture handling is deferred, so calling `e.stopPropagation()` inside `onTapStart` is too
-late.
-
-**Tap inside a draggable** is cancelled automatically once the pointer moves more than 3px.
+**Dragging an image produces a ghost** → the platform's own drag-and-drop is competing with yours.
+Disable it on the element.
 
 ---
 
-## 7. SVG
+## 7. State, callbacks and lifecycle
 
-- **SVG does not support layout animations** (SVG has no layout system). Animate attributes directly
-  (`cx`, `x`, `width`…) or the `viewBox`.
-- SVG `filter` elements (`feGaussianBlur` etc.) **receive no events**. Put `whileHover` on the parent
-  `<motion.svg>` and drive the filter children through variants.
-- Path drawing uses `pathLength` / `pathSpacing` / `pathOffset` (0–1) on `circle` `ellipse` `line`
-  `path` `polygon` `polyline` `rect`.
+**Never hang real logic off an animation-completed callback.** It does not fire when the animation
+is interrupted, cancelled, or skipped under reduced motion — and all three are normal. Drive state
+from the event that caused the animation, and let the animation be presentation. The rule of thumb:
+if you deleted every animation from the product, all the logic should still run.
 
----
+**Animations and state can disagree.** If the animation is the source of truth for "is the menu
+open", then an interrupted animation leaves you in a state that does not exist in your model. Keep
+the boolean; animate toward it.
 
-## 8. Common misuse
-
-| Written as | Problem | Should be |
-|---|---|---|
-| `import { motion } from "framer-motion"` | old package name | `"motion/react"` |
-| `transition={{ type: "spring", duration: .3, stiffness: 200 }}` | setting `stiffness` makes `duration`/`bounce` inert | pick one system |
-| `spring({ duration: 0.3 })` | calling `spring()` directly takes **milliseconds** | `spring({ duration: 300 })` |
-| `useTransform` inside `.map()` | violates the rules of hooks | extract a child component, or use the function form |
-| new `animate` object every render | equal values won't replay, but the comparison still costs | `useMemo` or variants |
-| chaining animations with `setTimeout` | cannot be cancelled, and drifts | a sequence or `delayChildren` |
-| relying on `onAnimationComplete` for critical logic | never fires if interrupted | drive it from state; animation is presentation |
-| `import { motion } from "motion/react"` in an RSC | needs a client boundary | `import * as motion from "motion/react-client"`, or add `"use client"` |
+**Beware new-object-every-update.** Passing a freshly constructed configuration object on every
+update makes equality checks fail, which either replays the animation constantly or costs a
+comparison for nothing. Hoist it, memoise it, or name it as a token.
 
 ---
 
-## 9. Pre-delivery checklist
+## 8. Pre-delivery checklist
 
-- [ ] Is there a site-wide `<MotionConfig reducedMotion="user">`? Are parallax and autoplay branched separately?
-- [ ] Does every `whileInView` have `once: true`?
-- [ ] Are you animating `width` / `height` / `top` / `left` anywhere that should use `layout`?
-- [ ] Are `AnimatePresence` keys stable and unique, with the condition inside?
-- [ ] Is exit 0.5–0.7× the entry duration?
+- [ ] Is reduced motion handled globally? Are parallax and autoplay branched separately on top?
+- [ ] Do scroll-triggered animations fire once, at a sensible threshold?
+- [ ] Are you animating a layout-tier property anywhere that should be a transform?
+- [ ] Do exits actually play — with stable ids, and the condition inside the keep-alive?
+- [ ] Is exit 0.5–0.7× the entry duration, over a shorter distance?
 - [ ] Have you done the stagger arithmetic (interval × count ≤ 0.5s)?
-- [ ] **Have you looked at it in dark mode?** Is elevation still visible? Is the focus ring?
-- [ ] Have you run it once on a low-end device, or with 4× CPU throttling?
-- [ ] Does split text carry `aria-label` on the container and `aria-hidden` on the fragments?
+- [ ] Is there exactly one bounce value in use across the product?
+- [ ] **Have you looked at it in the dark theme?** Is elevation still visible? Is the focus ring?
+- [ ] Have you re-triggered every animation rapidly, five times, to see the interruption behaviour?
+- [ ] Have you run it once on a low-end device, or with a 4× CPU throttle?
+- [ ] Does split text carry a proper accessible label, with the fragments hidden?
 - [ ] Is any state conveyed by luminance alone, or by animation alone?
