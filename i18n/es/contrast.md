@@ -244,6 +244,10 @@ límites numéricos que no puedes cruzar.
 - Los estados intermedios durante una animación deben seguir siendo legibles. Un texto entrando en fundido a un contraste de 2:1 está,
   para parte de tu audiencia, en blanco durante toda esa duración. **Empezar una entrada en opacidad 0 está bien;
   lo que hay que evitar es aparcar en un valor «medio legible» como `0.3` como estado de reposo.**
+- **La textura también está sujeta a estos mínimos, y es más difícil de medir.** Una trama no tiene un único
+  valor de fondo contra el que medir un glifo, así que la lectura honesta se toma en su línea más oscura,
+  no en su media: por eso §8 la prohíbe directamente detrás de texto corrido en lugar de darle una ratio
+  que alcanzar.
 - **Conserva los cambios de luminancia con movimiento reducido.** Es exactamente ahí donde se ganan su sitio: con
   el movimiento y el escalado apagados, el brillo y el color siguen comunicando *el estado cambió*,
   sin inducir vértigo.
@@ -299,6 +303,29 @@ Dos consecuencias que se le escapan a la gente:
 - **Un ángulo y un paso por producto.** Dos ángulos se leen como dos materiales, que es una afirmación sobre
   tus objetos que no tenías intención de hacer. Elige 45° y para.
 
+### El texto le gana, siempre
+
+La textura cede ante el texto en los dos ejes donde podrían competir: **el orden de apilado y la atención.**
+
+- **Nunca pongas una trama detrás de texto corrido.** Ni con un alfa bajo, ni «sólo en el borde del bloque».
+  Una ratio de contraste se calcula contra el fondo sobre el que el glifo se asienta de verdad, y una trama no
+  tiene un fondo: tiene uno claro y uno oscuro, alternándose cada pocos píxeles. Un 4.5:1 medido contra la
+  media no es un 4.5:1 donde caen las líneas, y son las líneas las que deciden si el trazo de una letra
+  sobrevive.
+- **Reserva sitio para el bloque de acento; no dejes que el texto se le superponga.** Si la maquetación no
+  tiene espacio para reservar, lo que se va es el bloque, nunca el aire alrededor del texto.
+- **En cualquier región que contenga texto, la textura no debe ser lo primero sobre lo que aterriza el ojo.**
+  Si lo es, está demasiado fuerte. Baja el alfa hasta que ganen las palabras, o quítala.
+
+Por eso los usos legítimos de la tabla de arriba son regiones que llevan una *etiqueta*, no prosa; y aun así,
+**interrumpe la trama detrás de la etiqueta**. El dibujo técnico siempre ha hecho exactamente eso: la trama se
+detiene donde va la anotación, porque la anotación es la parte que hay que leer. Una lámina sólida unos pocos
+píxeles más grande que el texto, apoyada sobre la trama, es toda la técnica.
+
+La comprobación puedes hacerla sin herramientas: desenfoca los ojos sobre la región y mira qué se resuelve
+primero. Sea lo que sea, eso es lo que has priorizado. Si son las rayas, has hecho una afirmación decorativa
+sobre una región cuyo único trabajo era ser leída.
+
 ### No se mueve
 
 **Nunca animes una trama, y nunca animes una superficie grande por debajo de una.** Un patrón que se repite en
@@ -337,3 +364,4 @@ Recórrela después de construir cualquier cosa con capas o estados:
 - [ ] ¿Está sobre el fondo y no sobre los objetos, y nunca debajo de texto corrido?
 - [ ] ¿Un ángulo y un paso en todo el producto?
 - [ ] ¿Hay algo distinguido sólo por la textura?
+- [ ] ¿El texto le gana a la textura en todas partes: nada tramado detrás de texto corrido, y ningún sitio donde las rayas se resuelvan antes que las palabras?

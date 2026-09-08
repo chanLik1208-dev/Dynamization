@@ -244,6 +244,10 @@ numeric limits you may not cross.
 - Intermediate states during an animation must stay legible. Text fading in at 2:1 contrast is, for
   part of your audience, blank for that whole duration. **Starting an entry at opacity 0 is fine —
   what to avoid is parking at a "half-readable" value like `0.3` as a resting state.**
+- **Texture is bound by these floors too, and is harder to measure.** A hatch has no single
+  background value to measure a glyph against, so the honest reading is taken at its darkest line,
+  not its average — which is why §8 forbids it behind running text outright rather than giving it a
+  ratio to hit.
 - **Keep luminance changes under reduced motion.** This is exactly where they earn their place: with
   movement and scaling switched off, brightness and colour still communicate *the state changed*,
   without inducing vertigo.
@@ -299,6 +303,30 @@ Two consequences people miss:
 - **One angle and one period per product.** Two angles read as two materials, which is a claim about
   your objects that you did not intend to make. Pick 45° and stop.
 
+### Text outranks it, always
+
+Texture yields to text on both axes where they could compete: **stacking order and attention.**
+
+- **Never put a hatch behind running text.** Not at a low alpha, not "only the edge of the block".
+  A contrast ratio is computed against the background the glyph actually sits on, and a hatch does
+  not have one background — it has a light one and a dark one, alternating every few pixels. 4.5:1
+  measured against the average is not 4.5:1 where the lines fall, and it is the lines that decide
+  whether the stroke of a letter survives.
+- **Reserve space for the accent block; do not let text overlap it.** If the layout has no room to
+  reserve, the block is what goes — never the breathing room around the text.
+- **In any region containing text, the texture must not be the first thing the eye lands on.** If it
+  is, it is too strong. Lower the alpha until the words win, or take it out.
+
+This is why the legitimate uses in the table above are regions that carry a *label*, not prose —
+and even then, **break the hatch behind the label**. Engineering drawing has always done exactly
+that: the hatching stops where the annotation goes, because the annotation is the part that has to
+be read. A solid plate a few pixels larger than the text, sitting on the hatch, is the whole
+technique.
+
+The check is one you can run without tools: unfocus your eyes at the region and see what resolves
+first. Whatever that is, is what you have prioritised. If it is the stripes, you have made a
+decorative claim about a region whose only job was to be read.
+
 ### It does not move
 
 **Never animate a hatch, and never animate a large surface underneath one.** A repeating pattern in
@@ -337,3 +365,4 @@ Run through this after building anything with layering or state:
 - [ ] Is it on the ground rather than on the objects, and never under running text?
 - [ ] One angle and one period across the whole product?
 - [ ] Is anything distinguished by texture alone?
+- [ ] Does text win over texture everywhere — nothing hatched behind running text, and nothing where the stripes resolve before the words?

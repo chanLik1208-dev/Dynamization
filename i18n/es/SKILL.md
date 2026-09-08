@@ -168,7 +168,9 @@ Cambiar de tema intercambia el mecanismo, no sólo la paleta.
 A veces hay una tercera cosa en pantalla: la **textura** —trama de líneas, grano, una regla que se repite—. No es un
 canal ni un término de la especificación. Es un modificador de `lumin` que refuerza el fondo sobre el que se apoya un
 objeto, y tiene que quedarse más callada que el paso de luminancia más pequeño de tu escalera, o se lee como ruido
-en lugar de como material. Sólo refuerzo y acento → `contrast.md` §8.
+en lugar de como material. También pierde siempre contra el texto: nada tramado se sitúa detrás de texto corrido, y en
+cualquier región con palabras la textura no debe ser lo primero que alcanza el ojo. Sólo refuerzo y acento →
+`contrast.md` §8.
 
 > El modelo óptico, los sets de tokens claro/oscuro, el coste de animar cada propiedad de luminancia,
 > los mínimos de accesibilidad → `references/contrast.md`
