@@ -141,6 +141,53 @@ una de esas tres cosas. No hay una cuarta opción.
 
 ---
 
+### A6. La animación se reproduce dentro de un contenedor que todavía es transparente
+
+**Síntoma silencioso:** un efecto que demostrablemente se ejecuta —ves la clase aplicada, el tiempo es
+correcto, una captura a media ejecución lo muestra— y que ningún lector ve jamás. Ha terminado para cuando
+lo que lo contiene se vuelve visible.
+
+**Por qué se escribe:** dos observadores de scroll, escritos con semanas de diferencia, cada uno correcto
+por su cuenta. La sección hace fundido de entrada en un umbral; el elemento de dentro se anima en otro. Nada
+en ninguna de las dos piezas de código menciona a la otra, y el bug sólo aparece donde ambas se solapan: así
+que el elemento por encima del pliegue, que no tiene ningún ancestro haciendo fundido, funciona
+perfectamente y acaba siendo el caso de prueba.
+
+**El arreglo:** secuéncialos. La entrada del contenedor empieza primero; el contenido va detrás, desplazado
+lo bastante como para que el contenedor esté realmente en pantalla. Donde un runtime tiene orquestación
+padre/hijo, para esto está `beforeChildren` (`feel.md` §6); donde no la tiene, es un solo retardo.
+
+**La comprobación:** para cada animación de entrada, pregunta qué están haciendo sus ancestros en ese
+momento. Si alguno está a medio fundido, a media escala, o todavía en opacidad 0, tienes este bug. **Prueba
+la animación en el sitio donde va a salir, no en el primer sitio cómodo de la página.**
+
+---
+
+### A7. Un umbral que una frase partida en dos líneas no puede satisfacer nunca
+
+**Síntoma silencioso:** el efecto se dispara para unos elementos y para otros no, sin ningún patrón que
+puedas ver al principio — y los que fallan son los más largos.
+
+```js
+/* ❌ */
+new IntersectionObserver(fn, { threshold: 0.5 }).observe(inlinePhrase)
+```
+
+**Por qué se escribe:** `0.5` es el valor reflejo, y es el correcto para un bloque. Pero un elemento inline
+que se parte en dos líneas tiene una caja de contorno que va desde el inicio del primer fragmento hasta el
+final del segundo — y la mayor parte de esa caja es el hueco vacío junto a los dos fragmentos de línea. La
+proporción observada se calcula contra esa caja, así que una frase puede estar entera en pantalla y aun así
+no alcanzar nunca el umbral que pediste.
+
+**El arreglo:** umbrales bajos para objetivos inline —`0.1–0.25`— u observa en su lugar un envoltorio de
+nivel de bloque. Y donde la consecuencia de no dispararse es contenido invisible (el vecino de §A7 justo
+encima), añade la guarda por tiempo de espera.
+
+**La comprobación:** haz que una de tus frases de prueba sea lo bastante larga como para partirse. Casi
+nadie lo hace, y por eso esto sobrevive a la revisión.
+
+---
+
 ## B. Rompiste una regla que este pack enuncia con toda claridad
 
 ### B1. Mover algo con propiedades de layout
@@ -381,3 +428,5 @@ Recórrela antes de afirmar que una animación está terminada. Está ordenada p
 - [ ] Leído cada nombre de API en el listado de la plataforma, no de memoria (D1)
 - [ ] Recalculada cualquier tabla de números, y comprobados sus extremos y su pico (D3)
 - [ ] Abierto cada `§N` que hayas citado (E2)
+- [ ] Preguntado, para cada entrada, qué estaban haciendo sus ancestros en ese momento (A6)
+- [ ] Hecha una frase de prueba lo bastante larga como para partirse en una segunda línea (A7)

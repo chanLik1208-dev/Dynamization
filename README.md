@@ -69,7 +69,7 @@ references/
   contrast.md               The space axis — the expressive power of light and dark
   spring.md                 spring(Dv, b) on any runtime: conversion, integrator,
                             closed form, and how to bake one into a curve
-  recipes.md                25 patterns, each as an intent and a specification
+  recipes.md                26 patterns, each as an intent and a specification
   pitfalls.md               Symptom → cause → fix, grouped by mechanism
   errata.md                 The mistakes this pack invites — failures that throw nothing,
                             log nothing, and ship

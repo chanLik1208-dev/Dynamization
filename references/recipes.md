@@ -1,4 +1,4 @@
-# recipes.md — 25 patterns, as specifications
+# recipes.md — 26 patterns, as specifications
 
 Each recipe states its **intent** first, then a spec you can implement in any runtime, then the one
 thing that usually goes wrong. No recipe here names an API; take the numbers to your adapter.
@@ -386,6 +386,41 @@ seeded with the release velocity.
 feels broken. `0.5` is the value nearly every platform converged on.
 
 ---
+
+## 26. First-sight highlight
+
+**Intent:** this phrase is the point of the paragraph, and you are meeting it for the first time.
+
+A solid block of the accent colour wipes across the phrase, holds, and then drops to a light tint
+that stays. The words are not there during the wipe — they arrive with the fade.
+
+| Phase | Channel | From → To | Timing |
+|---|---|---|---|
+| wipe | block width | `0% → 100%`, from the left | `dur 0.3  curve out` |
+| hold | — | solid accent, no text | `0.3s` |
+| settle | block | accent → accent at `20–30%` — still obviously the accent colour, not a grey | `dur 0.4  curve out` |
+| settle | text | transparent → ink | `dur 0.4  curve out` |
+
+The resting state — light tint plus emphasised text — is the **base** style. The animation is
+additive, so a reader with no script, no `IntersectionObserver` or reduced motion still gets the
+emphasis and loses only the stroke.
+
+Fire once, per `recipes.md` §3. At most four or five phrases in a whole page: this animation carries
+no information, it only directs attention, and attention directed everywhere is directed nowhere.
+
+**Watch out:** four things, and every one of them has bitten this pack's own reference
+implementation.
+
+- **Never animate the font weight.** Weight changes advance widths and reflow the line. Set the
+  emphasis weight once, statically, and animate only the block.
+- **A solid block hides ink text.** Either knock the text out to the page's background token — which
+  is light in a light theme and near-dark in a dark one, so one token is correct in both — or, as
+  specified above, do not show text during the solid phase at all. What you may not do is leave
+  dark text sitting on a dark block, even for 200ms.
+- **If the resting state hides the text, a phrase that never gets its animation is simply missing
+  from the sentence.** Guard it: if the observer has not fired within a few seconds and the phrase
+  is on screen, run it anyway → `errata.md` §A7.
+- **A phrase inside a section that fades in must wait for it** → `errata.md` §A6.
 
 ## 25. Branching on reduced motion
 

@@ -141,6 +141,52 @@ one of those three. There is no fourth option.
 
 ---
 
+### A6. The animation plays inside a container that is still transparent
+
+**Silent symptom:** an effect that provably runs — you can see the class applied, the timing is
+right, a screenshot mid-flight shows it — and that no reader ever sees. It is finished by the time
+the thing containing it becomes visible.
+
+**Why it gets written:** two scroll observers, written weeks apart, each correct alone. The section
+fades in at one threshold; the element inside it animates at another. Nothing in either piece of
+code mentions the other, and the bug only appears where the two overlap — so the element above the
+fold, which has no fading ancestor, works perfectly and gets used as the test case.
+
+**The fix:** sequence them. The container's entrance starts first; the contents follow it, offset by
+enough that the container is actually on screen. Where a runtime has parent/child orchestration,
+this is what `beforeChildren` is for (`feel.md` §6); where it does not, it is one delay.
+
+**The check:** for every entrance animation, ask what its ancestors are doing at that moment. If any
+of them is mid-fade, mid-scale, or still at opacity 0, you have this bug. **Test the animation in
+the place it will ship, not in the first place on the page that was convenient.**
+
+---
+
+### A7. A threshold a wrapped phrase can never satisfy
+
+**Silent symptom:** the effect fires for some elements and not others, with no pattern you can see
+at first — and the ones that fail are the longer ones.
+
+```js
+/* ❌ */
+new IntersectionObserver(fn, { threshold: 0.5 }).observe(inlinePhrase)
+```
+
+**Why it gets written:** `0.5` is the reflexive value, and it is right for a block. But an inline
+element that wraps across two lines has a bounding box spanning from the start of the first fragment
+to the end of the second — and most of that box is the empty gutter beside the two line fragments.
+The observed ratio is computed against that box, so a phrase can be entirely on screen and still
+never reach the threshold you asked for.
+
+**The fix:** low thresholds for inline targets — `0.1–0.25` — or observe a block-level wrapper
+instead. And where the consequence of not firing is invisible content (§A7's neighbour above),
+add the timeout guard.
+
+**The check:** make one of your test phrases long enough to wrap. Almost nobody does, which is why
+this survives review.
+
+---
+
 ## B. You broke a rule this pack states plainly
 
 ### B1. Moving something with layout properties
@@ -381,3 +427,5 @@ Run this before claiming an animation is done. It is ordered by how often the ch
 - [ ] Read every API name out of the platform's listing, not from memory (D1)
 - [ ] Recomputed any table of numbers, and checked its endpoints and peak (D3)
 - [ ] Opened every `§N` you cited (E2)
+- [ ] Asked, for each entrance, what its ancestors were doing at that moment (A6)
+- [ ] Made one test phrase long enough to wrap onto a second line (A7)

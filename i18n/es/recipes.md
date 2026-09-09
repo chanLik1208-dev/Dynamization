@@ -1,4 +1,4 @@
-# recipes.md — 25 patrones, como especificaciones
+# recipes.md — 26 patrones, como especificaciones
 
 Cada receta enuncia primero su **intención**, luego una especificación que puedes implementar en cualquier runtime, y luego lo único
 que suele salir mal. Ninguna receta de aquí nombra una API; lleva los números a tu adaptador.
@@ -386,6 +386,42 @@ sembrado con la velocidad de soltado.
 se siente roto. `0.5` es el valor al que convergieron casi todas las plataformas.
 
 ---
+
+## 26. Resalte a primera vista
+
+**Intención:** esta frase es el punto del párrafo, y te la estás encontrando por primera vez.
+
+Un bloque sólido del color de acento barre la frase, se mantiene, y luego cae a un tinte claro que se queda.
+Las palabras no están ahí durante el barrido: llegan con el fundido.
+
+| Fase | Canal | De → A | Tiempo |
+|---|---|---|---|
+| barrido | ancho del bloque | `0% → 100%`, desde la izquierda | `dur 0.3  curve out` |
+| espera | — | acento sólido, sin texto | `0.3s` |
+| asentamiento | bloque | acento → acento al `20–30%` — sigue siendo obviamente el color de acento, no un gris | `dur 0.4  curve out` |
+| asentamiento | texto | transparente → tinta | `dur 0.4  curve out` |
+
+El estado en reposo —tinte claro más texto enfatizado— es el estilo **base**. La animación es aditiva, así
+que un lector sin script, sin `IntersectionObserver` o con movimiento reducido recibe igualmente el énfasis
+y sólo pierde el trazo.
+
+Dispárala una vez, según `recipes.md` §3. Como mucho cuatro o cinco frases en una página entera: esta
+animación no transporta información, sólo dirige la atención, y la atención dirigida a todas partes no está
+dirigida a ninguna.
+
+**Ojo con:** cuatro cosas, y cada una de ellas ha mordido a la implementación de referencia de este mismo
+pack.
+
+- **Nunca animes el grosor de la fuente.** Los cambios de grosor alteran los anchos de avance y rehacen el
+  flujo de la línea. Fija el grosor del énfasis una vez, de forma estática, y anima sólo el bloque.
+- **Un bloque sólido esconde el texto en tinta.** O calas el texto al token de fondo de la página —que es
+  claro en un tema claro y casi oscuro en uno oscuro, así que un solo token es correcto en ambos— o, como se
+  especifica arriba, no muestras texto en absoluto durante la fase sólida. Lo que no puedes hacer es dejar
+  texto oscuro sobre un bloque oscuro, ni siquiera durante 200ms.
+- **Si el estado en reposo esconde el texto, una frase que nunca recibe su animación simplemente falta en la
+  oración.** Ponle una guarda: si el observador no ha disparado en unos segundos y la frase está en
+  pantalla, ejecútala igualmente → `errata.md` §A7.
+- **Una frase dentro de una sección que hace fundido de entrada tiene que esperarla** → `errata.md` §A6.
 
 ## 25. Ramificar según el movimiento reducido
 
