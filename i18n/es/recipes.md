@@ -391,25 +391,28 @@ se siente roto. `0.5` es el valor al que convergieron casi todas las plataformas
 
 **Intención:** esta frase es el punto del párrafo, y te la estás encontrando por primera vez.
 
-Un bloque sólido del color de acento barre la frase, se mantiene, y luego cae a un tinte claro que se queda.
-Las palabras no están ahí durante el barrido: llegan con el fundido.
+Un trazo del color de acento, dos pasadas y una espera entre ellas. Entra barriendo desde la izquierda y va
+dejando un bloque claro debajo de sí. Espera. Luego **sigue en la misma dirección** y sale por el borde
+derecho, entregando la frase a su paso. El bloque que dejó se queda.
 
 | Fase | Canal | De → A | Tiempo |
 |---|---|---|---|
-| barrido | ancho del bloque | `0% → 100%`, desde la izquierda | `dur 0.36  curve out` |
-| espera | — | acento sólido, sin texto | `0.08s` — un compás, no una pausa |
-| asentamiento | bloque | acento → acento al `20–30%` — sigue siendo obviamente el color de acento, no un gris | `dur 0.56  curve inout` |
-| asentamiento | texto | transparente → tinta | `dur 0.48`, terminando en torno al 92% del conjunto |
+| pasada uno | ancho del trazo | `0% → 100%`, anclado a la izquierda | `dur 0.38`, una deceleración dura — `cubic-bezier(.16, 1, .3, 1)` |
+| espera | — | acento sólido, sin texto | `0.13s` |
+| pasada dos | ancho del trazo | `100% → 0%`, anclado a la **derecha** | `dur 0.48  curve inout` |
+| — | texto | transparente → tinta | terminando en torno al 96%, por detrás de la pasada dos |
 
-**Sobre el total.** Un segundo está por encima del nivel de página / narrativa de `0.4–0.8s` de `SKILL.md`
-§3.4, y eso es deliberado, no un descuido: la llegada de la frase es la recompensa, y meterle prisa
-desperdicia el barrido que se la preparó. El techo de ese nivel existe para que la gente no se quede
-esperando: esta animación se dispara una vez, no bloquea nada, y termina antes de que un lector acabe la
-oración que la rodea. **Si necesitas recuperar presupuesto, quítaselo al barrido y a la espera, no al
-revelado.** Ésa es la dirección en la que se reajustó esta receta, y el revelado es lo último que debería
-acortarse.
+Que el ancla pase de la izquierda a la derecha es lo que hace que la segunda pasada se lea como una
+continuación y no como una retirada. Hazlo en el fotograma en que el trazo está a su anchura completa —ahí
+es invisible— y haz que ese paso sea discreto, o se irá hacia atrás a lo largo de toda la pasada uno.
 
-El estado en reposo —tinte claro más texto enfatizado— es el estilo **base**. La animación es aditiva, así
+**Sobre el total.** Un segundo está por encima del nivel narrativo de `0.4–0.8s` de `SKILL.md` §3.4, y eso es
+deliberado, no un descuido: la llegada de la frase es la recompensa, y meterle prisa desperdicia la pasada
+que se la preparó. El techo de ese nivel existe para que la gente no se quede esperando: esta animación se
+dispara una vez, no bloquea nada, y termina antes de que un lector acabe la oración que la rodea. **Si
+necesitas recuperar presupuesto, quítaselo a la pasada uno y a la espera, no al revelado.**
+
+El estado en reposo —bloque claro más texto enfatizado— es el estilo **base**. La animación es aditiva, así
 que un lector sin script, sin `IntersectionObserver` o con movimiento reducido recibe igualmente el énfasis
 y sólo pierde el trazo.
 
@@ -417,36 +420,33 @@ Dispárala una vez, según `recipes.md` §3. Como mucho cuatro o cinco frases en
 animación no transporta información, sólo dirige la atención, y la atención dirigida a todas partes no está
 dirigida a ninguna.
 
-**Ojo con:** cuatro cosas, y cada una de ellas ha mordido a la implementación de referencia de este mismo
-pack.
+**Ojo con:** cada una de estas se encontró construyéndolo mal primero.
 
 - **Nunca animes el grosor de la fuente.** Los cambios de grosor alteran los anchos de avance y rehacen el
-  flujo de la línea. Fija el grosor del énfasis una vez, de forma estática, y anima sólo el bloque.
-- **Un bloque sólido esconde el texto en tinta.** O calas el texto al token de fondo de la página —que es
-  claro en un tema claro y casi oscuro en uno oscuro, así que un solo token es correcto en ambos— o, como se
-  especifica arriba, no muestras texto en absoluto durante la fase sólida. Lo que no puedes hacer es dejar
-  texto oscuro sobre un bloque oscuro, ni siquiera durante 200ms.
-- **Si el estado en reposo esconde el texto, una frase que nunca recibe su animación simplemente falta en la
-  oración.** Ponle una guarda: si el observador no ha disparado en unos segundos y la frase está en
-  pantalla, ejecútala igualmente → `errata.md` §A7.
+  flujo de la línea. Fija el grosor del énfasis una vez, de forma estática, y anima sólo el trazo.
+- **Un trazo sólido esconde el texto en tinta, así que no tengas texto.** Mantén las palabras transparentes
+  hasta que la pasada dos esté casi terminada. Es el mismo contrato que entrar desde opacity 0, y elimina
+  el problema de legibilidad en vez de gestionarlo.
+- **No reveles las palabras recortando una capa de fondo contra el texto.** Es la forma obvia de escribirlas
+  a la estela del trazo, y una lista de `background-clip` por capa no aguanta: la versión construida así no
+  pintó texto, ni bloque, sino dos fragmentos sueltos de acento. Que las palabras suban un poco por detrás
+  del trazo se lee casi igual y funciona siempre.
+- **Una espera es un compás, no una pausa.** Bastante más allá de `0.15s`, un fotograma inmóvil deja de
+  leerse como énfasis y empieza a leerse como un tirón. Aquí sobrevive sólo porque ambas pasadas entran y
+  salen de ella suavizadas.
+- **`curve out` es un error en la pasada dos**, aunque sea lo correcto casi en todas partes en este pack:
+  easeOut carga su cambio al principio, así que el color se vuelca en el primer quinto y el trazo parece
+  desvanecerse en vez de marcharse. `curve inout` sale con suavidad y decelera hasta el reposo.
+- **Suaviza cada segmento.** Una animación de varias fases se suele escribir como una sola forma abreviada
+  con una única función de tiempo, y si esa función es `linear` el conjunto entero se arrastra a velocidad
+  constante salvo allí donde un fotograma clave la sobrescribe. La pasada que estás diseñando se suaviza;
+  las demás se olvidan.
 - **Una frase dentro de una sección que hace fundido de entrada tiene que esperarla** → `errata.md` §A6.
-- **Suaviza cada segmento, incluido el asentamiento.** Una animación de varias fases se suele escribir
-  como una sola forma abreviada con una única función de tiempo, y si esa función es `linear` el conjunto
-  entero se arrastra a velocidad constante salvo allí donde un fotograma clave la sobrescribe. El barrido
-  es el segmento que la gente se acuerda de suavizar; el asentamiento es el que olvida, y un asentamiento
-  que se para en seco es lo que significa «el fundido se ve mal». Fija la curva por segmento, en los
-  fotogramas clave.
-- **Una espera es un compás, no una pausa, y el asentamiento tiene que salir suavizado de ella.** Dos
-  errores que producen la misma queja: *se queda pegado y luego desaparece*. Una espera lo bastante
-  larga como para ser del todo estática (bastante más allá de `0.15s`) deja de leerse como énfasis y
-  empieza a leerse como un tirón. Y `curve out` en el asentamiento es un error aquí aunque sea lo
-  correcto casi en todas partes: easeOut carga su cambio al principio, así que el color se vuelca en el
-  primer quinto del segmento y el bloque parece desaparecer en vez de calmarse. Usa `curve inout`: sale
-  de la espera con suavidad y decelera hasta el reposo.
-- **Deja que las palabras aterricen antes de que el bloque termine.** Una señal de estado llega más
-  rápido que la superficie que la transporta (`contrast.md` §5): termina el texto en torno al 85% de la
-  animación y deja que el bloque siga suavizando hasta el 100%. Hacer un fundido cruzado de ambos al
-  mismo ritmo queda turbio.
+- **Mira el estado en reposo, no la animación.** Dos de los fallos de arriba eran invisibles en el código y
+  evidentes en cuanto se miró el estado terminado: un estado final equivocado vale más como señal que
+  cualquier cantidad de fotogramas capturados en pleno vuelo.
+
+---
 
 ## 25. Ramificar según el movimiento reducido
 

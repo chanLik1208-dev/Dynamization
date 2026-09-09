@@ -391,57 +391,60 @@ feels broken. `0.5` is the value nearly every platform converged on.
 
 **Intent:** this phrase is the point of the paragraph, and you are meeting it for the first time.
 
-A solid block of the accent colour wipes across the phrase, holds, and then drops to a light tint
-that stays. The words are not there during the wipe — they arrive with the fade.
+One stroke of the accent colour, two passes, and a wait between them. It sweeps in from the left,
+laying a light block down beneath itself. It waits. Then it **keeps going in the same direction**
+and leaves off the right edge, handing the phrase over as it goes. The block it laid down stays.
 
 | Phase | Channel | From → To | Timing |
 |---|---|---|---|
-| wipe | block width | `0% → 100%`, from the left | `dur 0.36  curve out` |
-| hold | — | solid accent, no text | `0.08s` — a beat, not a pause |
-| settle | block | accent → accent at `20–30%` — still obviously the accent colour, not a grey | `dur 0.56  curve inout` |
-| settle | text | transparent → ink | `dur 0.48`, finishing at ~92% of the whole |
+| pass one | stroke width | `0% → 100%`, anchored left | `dur 0.38`, a hard deceleration — `cubic-bezier(.16, 1, .3, 1)` |
+| wait | — | solid accent, no text | `0.13s` |
+| pass two | stroke width | `100% → 0%`, anchored **right** | `dur 0.48  curve inout` |
+| — | text | transparent → ink | finishing at ~96%, behind pass two |
+
+The anchor moving from left to right is what makes the second pass read as continuing rather than
+retreating. Do it in the frame where the stroke is at full width — there it is invisible — and make
+that step discrete, or it drifts backwards across pass one.
 
 **On the total.** One second is above the `0.4–0.8s` narrative tier in `SKILL.md` §3.4, and that is
 deliberate rather than an oversight: the phrase arriving is the payoff, and hurrying it wastes the
-wipe that set it up. The tier's ceiling exists to stop people waiting — this animation fires once,
+pass that set it up. The tier's ceiling exists to stop people waiting — this animation fires once,
 blocks nothing, and is over before a reader finishes the sentence around it. **If you need the
-budget back, take it from the wipe and the hold, not from the reveal.** That is the direction this
-recipe was retuned in, and the reveal is the last thing that should get shorter.
+budget back, take it from pass one and the wait, not from the reveal.**
 
-The resting state — light tint plus emphasised text — is the **base** style. The animation is
+The resting state — the light block plus emphasised text — is the **base** style. The animation is
 additive, so a reader with no script, no `IntersectionObserver` or reduced motion still gets the
 emphasis and loses only the stroke.
 
 Fire once, per `recipes.md` §3. At most four or five phrases in a whole page: this animation carries
 no information, it only directs attention, and attention directed everywhere is directed nowhere.
 
-**Watch out:** four things, and every one of them has bitten this pack's own reference
-implementation.
+**Watch out:** every one of these was found by building it wrong first.
 
 - **Never animate the font weight.** Weight changes advance widths and reflow the line. Set the
-  emphasis weight once, statically, and animate only the block.
-- **A solid block hides ink text.** Either knock the text out to the page's background token — which
-  is light in a light theme and near-dark in a dark one, so one token is correct in both — or, as
-  specified above, do not show text during the solid phase at all. What you may not do is leave
-  dark text sitting on a dark block, even for 200ms.
-- **If the resting state hides the text, a phrase that never gets its animation is simply missing
-  from the sentence.** Guard it: if the observer has not fired within a few seconds and the phrase
-  is on screen, run it anyway → `errata.md` §A7.
+  emphasis weight once, statically, and animate only the stroke.
+- **A solid stroke hides ink text, so do not have any.** Keep the words transparent until pass two
+  is most of the way through. That is the same contract as entering from opacity 0, and it removes
+  the legibility problem instead of managing it.
+- **Do not reveal the words by clipping a background layer to the text.** It is the obvious way to
+  write them on in the stroke's wake, and a per-layer `background-clip` list does not hold up: the
+  version built that way painted no text, no block and two stray fragments of accent. The words
+  coming up slightly behind the stroke reads almost the same and always works.
+- **A wait is a beat, not a pause.** Much past `0.15s` a motionless frame stops reading as emphasis
+  and starts reading as a hitch. It survives here only because both passes are eased into and out
+  of it.
+- **`curve out` is wrong on pass two**, even though it is right almost everywhere else in this pack:
+  easeOut front-loads its change, so the colour dumps in the first fifth and the stroke appears to
+  vanish rather than leave. `curve inout` departs gently and decelerates into rest.
+- **Ease every segment.** A multi-phase animation is usually one shorthand with one timing function,
+  and if that function is `linear` everything crawls at constant speed except where a keyframe
+  overrides it. The pass you are designing gets eased; the others get forgotten.
 - **A phrase inside a section that fades in must wait for it** → `errata.md` §A6.
-- **Ease every segment, including the settle.** A multi-phase animation is usually written as one
-  shorthand with one timing function, and if that function is `linear` the whole thing crawls at
-  constant speed except wherever a keyframe overrides it. The wipe is the segment people remember to
-  ease; the settle is the one they forget, and a settle that stops dead is what "the fade looks
-  wrong" means. Set the curve per segment, in the keyframes.
-- **A hold is a beat, not a pause, and the settle must ease out of it.** Two mistakes that produce
-  the same complaint — *it sticks, then vanishes*. A hold long enough to be fully static (much past
-  `0.15s`) stops reading as emphasis and starts reading as a hitch. And `curve out` on the settle is
-  wrong here even though it is right almost everywhere else: easeOut front-loads its change, so the
-  colour dumps in the first fifth of the segment and the block appears to disappear rather than
-  calm down. Use `curve inout` — it leaves the hold gently and decelerates into rest.
-- **Let the words land before the block finishes.** A state signal arrives faster than the surface
-  carrying it (`contrast.md` §5): finish the text at about 85% of the animation and let the block
-  keep easing to 100%. Cross-fading both at the same rate reads as mush.
+- **Watch the resting state, not the animation.** Two of the bugs above were invisible in the source
+  and obvious the moment the finished state was looked at — a wrong end state is worth more as a
+  signal than any number of frames captured mid-flight.
+
+---
 
 ## 25. Branching on reduced motion
 
