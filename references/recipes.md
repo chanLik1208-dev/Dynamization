@@ -396,10 +396,17 @@ that stays. The words are not there during the wipe — they arrive with the fad
 
 | Phase | Channel | From → To | Timing |
 |---|---|---|---|
-| wipe | block width | `0% → 100%`, from the left | `dur 0.42  curve out` |
-| hold | — | solid accent, no text | `0.13s` — a beat, not a pause |
-| settle | block | accent → accent at `20–30%` — still obviously the accent colour, not a grey | `dur 0.45  curve inout` |
-| settle | text | transparent → ink | finishes at ~88% of the whole |
+| wipe | block width | `0% → 100%`, from the left | `dur 0.36  curve out` |
+| hold | — | solid accent, no text | `0.08s` — a beat, not a pause |
+| settle | block | accent → accent at `20–30%` — still obviously the accent colour, not a grey | `dur 0.56  curve inout` |
+| settle | text | transparent → ink | `dur 0.48`, finishing at ~92% of the whole |
+
+**On the total.** One second is above the `0.4–0.8s` narrative tier in `SKILL.md` §3.4, and that is
+deliberate rather than an oversight: the phrase arriving is the payoff, and hurrying it wastes the
+wipe that set it up. The tier's ceiling exists to stop people waiting — this animation fires once,
+blocks nothing, and is over before a reader finishes the sentence around it. **If you need the
+budget back, take it from the wipe and the hold, not from the reveal.** That is the direction this
+recipe was retuned in, and the reveal is the last thing that should get shorter.
 
 The resting state — light tint plus emphasised text — is the **base** style. The animation is
 additive, so a reader with no script, no `IntersectionObserver` or reduced motion still gets the

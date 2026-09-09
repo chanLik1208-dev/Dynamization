@@ -185,18 +185,18 @@
 
     <div class="row">
       <label for="sweep">掃入</label>
-      <input type="range" id="sweep" min="60" max="1200" step="20" value="420">
-      <output id="sweep-o">420 ms</output>
+      <input type="range" id="sweep" min="60" max="1200" step="20" value="360">
+      <output id="sweep-o">360 ms</output>
     </div>
     <div class="row">
       <label for="hold">停住</label>
-      <input type="range" id="hold" min="0" max="2000" step="20" value="130">
-      <output id="hold-o">130 ms</output>
+      <input type="range" id="hold" min="0" max="2000" step="20" value="80">
+      <output id="hold-o">80 ms</output>
     </div>
     <div class="row">
       <label for="fade">淡出顯字</label>
-      <input type="range" id="fade" min="60" max="1600" step="20" value="450">
-      <output id="fade-o">450 ms</output>
+      <input type="range" id="fade" min="60" max="1600" step="20" value="560">
+      <output id="fade-o">560 ms</output>
     </div>
 
     <div class="readout">
@@ -261,7 +261,7 @@
       " background-image: linear-gradient(var(--blue), var(--blue));" +
       " color: transparent;" +
       " animation-timing-function: cubic-bezier(.4,0,.2,1); }\n" +
-      "  " + (+k2 + (100 - k2) * 0.62).toFixed(2) + "% { color: var(--ink); }\n" +
+      "  " + (+k2 + (100 - k2) * 0.857).toFixed(2) + "% { color: var(--ink); }\n" +
       "  100% { background-size: 100% 100%;" +
       " background-image: linear-gradient(var(--hl), var(--hl));" +
       " color: var(--ink); }\n" +

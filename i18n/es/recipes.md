@@ -396,10 +396,18 @@ Las palabras no están ahí durante el barrido: llegan con el fundido.
 
 | Fase | Canal | De → A | Tiempo |
 |---|---|---|---|
-| barrido | ancho del bloque | `0% → 100%`, desde la izquierda | `dur 0.42  curve out` |
-| espera | — | acento sólido, sin texto | `0.13s` — un compás, no una pausa |
-| asentamiento | bloque | acento → acento al `20–30%` — sigue siendo obviamente el color de acento, no un gris | `dur 0.45  curve inout` |
-| asentamiento | texto | transparente → tinta | termina en torno al 88% del conjunto |
+| barrido | ancho del bloque | `0% → 100%`, desde la izquierda | `dur 0.36  curve out` |
+| espera | — | acento sólido, sin texto | `0.08s` — un compás, no una pausa |
+| asentamiento | bloque | acento → acento al `20–30%` — sigue siendo obviamente el color de acento, no un gris | `dur 0.56  curve inout` |
+| asentamiento | texto | transparente → tinta | `dur 0.48`, terminando en torno al 92% del conjunto |
+
+**Sobre el total.** Un segundo está por encima del nivel de página / narrativa de `0.4–0.8s` de `SKILL.md`
+§3.4, y eso es deliberado, no un descuido: la llegada de la frase es la recompensa, y meterle prisa
+desperdicia el barrido que se la preparó. El techo de ese nivel existe para que la gente no se quede
+esperando: esta animación se dispara una vez, no bloquea nada, y termina antes de que un lector acabe la
+oración que la rodea. **Si necesitas recuperar presupuesto, quítaselo al barrido y a la espera, no al
+revelado.** Ésa es la dirección en la que se reajustó esta receta, y el revelado es lo último que debería
+acortarse.
 
 El estado en reposo —tinte claro más texto enfatizado— es el estilo **base**. La animación es aditiva, así
 que un lector sin script, sin `IntersectionObserver` o con movimiento reducido recibe igualmente el énfasis
