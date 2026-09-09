@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dynamization — demos</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+  :root {
+    color-scheme: light dark;
+    --paper:  #EEEEEB;
+    --surface:#F7F7F5;
+    --ink:    #191B1A;
+    --ink-2:  #55595A;
+    --ink-3:  #85898B;
+    --rule:   #D3D5D2;
+    --rule-2: #E2E4E1;
+    --blue:   #24379B;
+    --hatch: repeating-linear-gradient(45deg,
+      transparent 0 5px, rgb(25 27 26 / .045) 5px 6px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:  #0E100F;
+      --surface:#161918;
+      --ink:    #E5E7E5;
+      --ink-2:  #9BA1A0;
+      --ink-3:  #6F7574;
+      --rule:   #2B302E;
+      --rule-2: #222725;
+      --blue:   #8FA0F0;
+      --hatch: repeating-linear-gradient(45deg,
+        transparent 0 5px, rgb(229 231 229 / .05) 5px 6px);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 72px 24px 96px;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Instrument Sans", "PingFang TC", system-ui, sans-serif;
+    line-height: 1.7;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; }
+
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  h1 {
+    font-family: "Instrument Serif", "Songti TC", serif;
+    font-weight: 400;
+    font-size: clamp(38px, 6vw, 60px);
+    line-height: 1.08;
+    letter-spacing: -.015em;
+    margin: 12px 0 18px;
+  }
+  h1 em { font-style: italic; color: var(--blue); }
+  .lede { color: var(--ink-2); max-width: 58ch; margin: 0 0 44px; font-size: 17px; }
+  .lede a { color: inherit; text-underline-offset: 3px; }
+
+  .cards { display: grid; gap: 16px; }
+  a.card {
+    display: grid;
+    grid-template-columns: 132px 1fr;
+    gap: 24px;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+    background: var(--surface);
+    border: 1px solid var(--rule-2);
+    border-radius: 4px;
+    padding: 20px 24px;
+    translate: 0;
+    transition: translate .2s cubic-bezier(.25,.1,.35,1),
+                border-color .13s cubic-bezier(.25,.1,.35,1);
+  }
+  a.card:hover { translate: 0 -3px; border-color: var(--rule); }
+  a.card:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+  .plate {
+    height: 74px;
+    border-radius: 3px;
+    background: var(--hatch), var(--paper);
+    border: 1px solid var(--rule-2);
+  }
+  .card h2 {
+    font-family: "Instrument Serif", "Songti TC", serif;
+    font-weight: 400;
+    font-size: 24px;
+    margin: 0 0 4px;
+  }
+  .card p { margin: 0; color: var(--ink-2); font-size: 15px; }
+
+  footer {
+    margin-top: 56px;
+    border-top: 1px solid var(--rule-2);
+    padding-top: 20px;
+    font-size: 13.5px;
+    color: var(--ink-3);
+  }
+  footer a { color: var(--ink-2); text-underline-offset: 3px; }
+
+  @media (max-width: 620px) {
+    a.card { grid-template-columns: 1fr; gap: 16px; }
+    .plate { height: 54px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    a.card { transition-property: border-color; }
+    a.card:hover { translate: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Dynamization</div>
+  <h1>Three pages that <em>are</em> the specification</h1>
+  <p class="lede">
+    Reference implementations for the language pack in
+    <a href="https://github.com/chanLik1208-dev/Dynamization">this repository</a>. Every transition
+    on them is built from the tokens in <code>feel.md</code> §11, and every one of the mistakes in
+    <code>errata.md</code> was found by building them.
+  </p>
+
+  <div class="cards">
+    <a class="card" href="exhibition.html">
+      <span class="plate" aria-hidden="true"></span>
+      <span>
+        <h2>度量衡特展</h2>
+        <p>A complete site: card lift, reflow on filter, a shared element into a dialog,
+           dropdown, toasts, accordion, skeletons, the first-sight highlight — and both themes.</p>
+      </span>
+    </a>
+
+    <a class="card" href="comparison.html">
+      <span class="plate" aria-hidden="true"></span>
+      <span>
+        <h2>改版對照</h2>
+        <p>What changed when this pack dropped its dependency on one animation library, with a
+           spring curve plotted live from the closed form and CSS <code>linear()</code> springs
+           running as themselves.</p>
+      </span>
+    </a>
+
+    <a class="card" href="highlight-test.html">
+      <span class="plate" aria-hidden="true"></span>
+      <span>
+        <h2>高亮掃入測試台</h2>
+        <p>One effect, isolated, with a replay button, sliders for each phase and a live
+           <code>requestAnimationFrame</code> readout — so a timing argument can be measured
+           instead of described.</p>
+      </span>
+    </a>
+  </div>
+
+  <footer>
+    MIT · <a href="https://github.com/chanLik1208-dev/Dynamization">chanLik1208-dev/Dynamization</a>
+    · the Motion edition is archived at
+    <a href="https://github.com/chanLik1208-dev/Dynamization-Motion">Dynamization-Motion</a>
+  </footer>
+</div>
+</body>
+</html>

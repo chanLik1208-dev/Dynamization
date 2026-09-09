@@ -88,6 +88,17 @@ The judgment chapters — `SKILL`, `feel`, `contrast`, `recipes`, `pitfalls`, `e
 adapters stay English-only by design: they are mostly code and API identifiers, where translation
 adds noise and invites drift.
 
+## Seeing it
+
+Three reference implementations are published from `docs/`:
+**https://chanlik1208-dev.github.io/Dynamization/**
+
+The exhibition site is the substantive one — every transition on it is built from the tokens in
+`feel.md` §11, and most of the entries in `errata.md` were found by building it. The comparison
+sheet plots a spring from the closed form in `spring.md` and runs the baked CSS `linear()` springs
+as themselves. The test bench isolates one effect with a replay button and a live timing readout,
+so an argument about timing can be measured rather than described.
+
 ## Using it
 
 Drop the directory into your skills folder:

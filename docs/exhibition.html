@@ -1,0 +1,1338 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { color-scheme: light dark; }
+  html { -webkit-text-size-adjust: 100%; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+</style>
+<title>度量衡特展</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+  :root {
+    --paper:     #EEEEEB;
+    --surface:   #F7F7F5;
+    --raised:    #FFFFFF;
+    --raised-hi: #FFFFFF;
+    --ink:       #191B1A;
+    --ink-2:     #55595A;
+    --ink-3:     #85898B;
+    --ink-off:   #A9ADAF;
+    --rule:      #D3D5D2;
+    --rule-2:    #E2E4E1;
+    --blue:      #24379B;
+    --blue-soft: #E4E7F6;
+    --blue-ink:  #24379B;
+
+    --e1: 0 1px 2px rgb(25 27 26 / .08);
+    --e2: 0 1px 2px rgb(25 27 26 / .05), 0 2px 6px rgb(25 27 26 / .07);
+    --e3: 0 2px 6px rgb(25 27 26 / .05), 0 8px 20px rgb(25 27 26 / .07);
+    --e4: 0 4px 12px rgb(25 27 26 / .05), 0 20px 48px rgb(25 27 26 / .10);
+    --rim: inset 0 1px 0 rgb(255 255 255 / .65);
+    --scrim: rgb(16 18 17 / .45);
+    --hatch: repeating-linear-gradient(45deg,
+      transparent 0 5px, rgb(25 27 26 / .045) 5px 6px);
+    --hatch-blue: repeating-linear-gradient(45deg,
+      transparent 0 4px, rgb(36 55 155 / .15) 4px 6px);
+    --hl:        rgb(36 55 155 / .22);   /* resting block */
+    --hl-strong: rgb(36 55 155 / .30);   /* the sweeping bar */
+
+    --f-display: "Instrument Serif", "Songti TC", "PingFang TC", serif;
+    --f-ui: "Instrument Sans", "PingFang TC", "Microsoft JhengHei", sans-serif;
+
+    /* feel.md §11 token set */
+    --t-feedback: .12s cubic-bezier(.25,.1,.35,1);
+    --t-micro:    .2s  cubic-bezier(.25,.1,.35,1);
+    --t-exit:     .15s cubic-bezier(.4,0,1,1);
+    --t-lumin:    .13s cubic-bezier(.25,.1,.35,1);
+    --sp-enter:  linear(0, 0.047, 0.156, 0.290, 0.427, 0.554, 0.663, 0.754, 0.826, 0.882, 0.923, 0.953, 0.974, 0.988, 0.997, 1.002, 1.005, 1.006, 1.006, 1.006, 1);
+    --sp-layout: linear(0, 0.054, 0.171, 0.306, 0.438, 0.554, 0.653, 0.733, 0.797, 0.847, 0.885, 0.915, 0.937, 0.953, 0.966, 0.975, 0.982, 0.987, 0.990, 0.993, 1);
+    --d-enter: .32s;
+    --d-layout: .41s;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:     #0E100F;
+      --surface:   #161918;
+      --raised:    #1D2120;
+      --raised-hi: #262B29;
+      --ink:       #E5E7E5;
+      --ink-2:     #9BA1A0;
+      --ink-3:     #6F7574;
+      --ink-off:   #545A59;
+      --rule:      #2B302E;
+      --rule-2:    #222725;
+      --blue:      #8FA0F0;
+      --blue-soft: #1C2140;
+      --blue-ink:  #A9B6F5;
+      --e1: 0 1px 2px rgb(0 0 0 / .5);
+      --e2: 0 2px 8px rgb(0 0 0 / .5);
+      --e3: 0 8px 22px rgb(0 0 0 / .55);
+      --e4: 0 20px 48px rgb(0 0 0 / .6);
+      --rim: inset 0 1px 0 rgb(255 255 255 / .06);
+      --scrim: rgb(0 0 0 / .68);
+      --hatch: repeating-linear-gradient(45deg,
+        transparent 0 5px, rgb(229 231 229 / .05) 5px 6px);
+      --hatch-blue: repeating-linear-gradient(45deg,
+        transparent 0 4px, rgb(143 160 240 / .17) 4px 6px);
+      --hl:        rgb(143 160 240 / .30);
+      --hl-strong: rgb(143 160 240 / .34);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:     #0E100F;
+    --surface:   #161918;
+    --raised:    #1D2120;
+    --raised-hi: #262B29;
+    --ink:       #E5E7E5;
+    --ink-2:     #9BA1A0;
+    --ink-3:     #6F7574;
+    --ink-off:   #545A59;
+    --rule:      #2B302E;
+    --rule-2:    #222725;
+    --blue:      #8FA0F0;
+    --blue-soft: #1C2140;
+    --blue-ink:  #A9B6F5;
+    --e1: 0 1px 2px rgb(0 0 0 / .5);
+    --e2: 0 2px 8px rgb(0 0 0 / .5);
+    --e3: 0 8px 22px rgb(0 0 0 / .55);
+    --e4: 0 20px 48px rgb(0 0 0 / .6);
+    --rim: inset 0 1px 0 rgb(255 255 255 / .06);
+    --scrim: rgb(0 0 0 / .68);
+    --hatch: repeating-linear-gradient(45deg,
+      transparent 0 5px, rgb(229 231 229 / .05) 5px 6px);
+    --hatch-blue: repeating-linear-gradient(45deg,
+      transparent 0 4px, rgb(143 160 240 / .17) 4px 6px);
+    --hl:        rgb(143 160 240 / .30);
+    --hl-strong: rgb(143 160 240 / .34);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--f-ui);
+    font-size: 16px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+  .label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  /* ---------------- header ---------------- */
+
+  .masthead {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: color-mix(in srgb, var(--paper) 88%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--rule-2);
+  }
+  .masthead .wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    height: 62px;
+  }
+  .brand {
+    font-family: var(--f-display);
+    font-size: 25px;
+    letter-spacing: .01em;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .brand em { font-style: italic; color: var(--blue-ink); }
+  .navlinks { display: flex; gap: 26px; }
+  .navlinks a {
+    color: var(--ink-2);
+    text-decoration: none;
+    font-size: 14px;
+    padding: 4px 0;
+    border-bottom: 1px solid transparent;
+    transition: color var(--t-lumin), border-color var(--t-lumin);
+  }
+  .navlinks a:hover { color: var(--ink); border-bottom-color: var(--rule); }
+  .navlinks a:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; border-radius: 2px; }
+
+  /* ---------------- hero ---------------- */
+
+  .hero {
+    position: relative;
+    overflow: hidden;              /* errata A1: nothing in the hero casts a shadow */
+    padding: 76px 0 56px;
+    border-bottom: 1px solid var(--rule-2);
+  }
+  .hero::after {
+    content: "";
+    position: absolute;
+    right: -60px; top: -50px; bottom: -50px;
+    width: 200px;
+    background: var(--hatch-blue);
+    transform: skewX(-12deg);
+    pointer-events: none;
+    z-index: 0;
+  }
+  /* contrast.md §8: text outranks texture. The accent block gets a reserved
+     gutter so no copy ever sits over it; where there is no room to reserve,
+     the block is what goes — not the space around the text. */
+  .hero .wrap { position: relative; z-index: 1; }
+  @media (min-width: 1000px) { .hero .wrap { padding-right: 200px; } }
+  @media (max-width: 999px)  { .hero::after { display: none; } }
+  .hero-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 56px; align-items: end; }
+  h1 {
+    font-family: var(--f-display);
+    font-weight: 400;
+    font-size: clamp(38px, 5.4vw, 76px);
+    line-height: 1.06;
+    letter-spacing: -.015em;
+    margin: 16px 0 0;
+    text-wrap: balance;
+  }
+  h1 em { font-style: italic; color: var(--blue-ink); }
+  .hero p {
+    color: var(--ink-2);
+    max-width: 44ch;
+    margin: 0;
+    font-size: 17px;
+  }
+  .hero-meta { display: grid; gap: 14px; }
+  .hero-meta div { display: flex; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--rule-2); padding-bottom: 10px; }
+  .hero-meta dt { color: var(--ink-3); font-size: 13px; }
+  .hero-meta dd { margin: 0; font-size: 14px; font-variant-numeric: tabular-nums; }
+
+  /* ---------------- controls bar ---------------- */
+
+  .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding: 22px 0 20px;
+  }
+
+  .tabs { position: relative; display: flex; gap: 4px; }
+  .tab {
+    appearance: none;
+    background: none;
+    border: 0;
+    font: inherit;
+    font-size: 14.5px;
+    color: var(--ink-2);
+    padding: 8px 14px 12px;
+    cursor: pointer;
+    border-radius: 3px 3px 0 0;
+    transition: color var(--t-lumin), background var(--t-lumin);
+  }
+  .tab:hover { color: var(--ink); background: var(--surface); }
+  .tab[aria-selected="true"] { color: var(--ink); font-weight: 600; }
+  .tab:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+  .underline {
+    position: absolute;
+    left: 0; bottom: 0;
+    height: 2px;
+    width: 1px;
+    background: var(--blue);
+    transform-origin: left center;
+    translate: 0;
+    scale: 1 1;
+    transition: translate var(--d-layout) var(--sp-layout), scale var(--d-layout) var(--sp-layout);
+  }
+
+  .filter { position: relative; }
+  .btn {
+    appearance: none;
+    font: inherit;
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--raised);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 8px 14px;
+    cursor: pointer;
+    box-shadow: var(--e1), var(--rim);
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    translate: 0;
+    scale: 1;
+    transition: translate var(--t-micro), scale var(--t-feedback),
+                box-shadow var(--t-lumin), background var(--t-lumin);
+  }
+  .btn:hover { background: var(--raised-hi); box-shadow: var(--e2), var(--rim); translate: 0 -1px; }
+  .btn:active { scale: .97; box-shadow: var(--e1); translate: 0 0; }
+  .btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .btn .caret { color: var(--ink-3); font-size: 11px; transition: rotate var(--t-micro); }
+  .btn[aria-expanded="true"] .caret { rotate: 180deg; }
+
+  .menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 208px;
+    background: var(--raised);
+    border: 1px solid var(--rule-2);
+    border-radius: 4px;
+    box-shadow: var(--e3), var(--rim);
+    padding: 6px;
+    z-index: 30;
+    transform-origin: top right;
+    opacity: 0;
+    scale: .95;
+    translate: 0 -4px;
+    visibility: hidden;
+    transition: opacity var(--t-exit), scale var(--t-exit), translate var(--t-exit), visibility 0s .15s;
+  }
+  .menu.open {
+    opacity: 1;
+    scale: 1;
+    translate: 0;
+    visibility: visible;
+    transition: opacity .15s cubic-bezier(.25,.1,.35,1),
+                scale var(--d-enter) var(--sp-enter),
+                translate var(--d-enter) var(--sp-enter),
+                visibility 0s;
+  }
+  .menu button {
+    appearance: none;
+    font: inherit;
+    font-size: 14px;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: 0;
+    border-radius: 3px;
+    padding: 8px 12px;
+    color: var(--ink-2);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    opacity: 0;
+    translate: 0 -4px;
+    transition: background var(--t-lumin), color var(--t-lumin);
+  }
+  .menu.open button { opacity: 1; translate: 0; transition: opacity .18s cubic-bezier(.25,.1,.35,1) var(--stagger, 0s), translate .18s cubic-bezier(.25,.1,.35,1) var(--stagger, 0s), background var(--t-lumin), color var(--t-lumin); }
+  .menu button:hover { background: var(--surface); color: var(--ink); }
+  .menu button[aria-checked="true"] { color: var(--blue-ink); font-weight: 500; }
+  .menu button:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+  .menu .n { color: var(--ink-off); font-variant-numeric: tabular-nums; }
+
+  /* ---------------- grid ---------------- */
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
+    gap: 20px;
+    padding-bottom: 8px;
+    min-height: 340px;
+  }
+
+  .card {
+    position: relative;
+    appearance: none;
+    font: inherit;
+    text-align: left;
+    background: var(--raised);
+    border: 1px solid var(--rule-2);
+    border-radius: 4px;
+    padding: 0;
+    cursor: pointer;
+    box-shadow: var(--e2);
+    translate: 0;
+    scale: 1;
+    transition: translate var(--t-micro), scale var(--t-micro), background var(--t-lumin);
+  }
+  /* contrast.md §6 — the higher shadow tier is pre-rendered and cross-faded */
+  .card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: var(--e3);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--t-lumin);
+  }
+  .card:hover { translate: 0 -4px; scale: 1.01; background: var(--raised-hi); }
+  .card:hover::after { opacity: 1; }
+  .card:active { scale: .99; translate: 0 -1px; }
+  .card:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+  /* the clip lives here, not on the card: overflow on the card would cut off
+     the ::after shadow, which paints outside the card's own box */
+  .card .mark {
+    display: block;
+    aspect-ratio: 4 / 3;
+    background: var(--hatch), var(--surface);
+    border-bottom: 1px solid var(--rule-2);
+    color: var(--ink-3);
+    border-radius: 3px 3px 0 0;
+    overflow: hidden;
+  }
+  .card .body { display: block; padding: 15px 17px 17px; }
+  .card .t {
+    display: block;
+    font-family: var(--f-display);
+    font-weight: 400;
+    font-size: 21px;
+    line-height: 1.2;
+    margin: 0 0 5px;
+    letter-spacing: .005em;
+  }
+  .card .meta { display: flex; gap: 10px; align-items: baseline; color: var(--ink-3); font-size: 13px; }
+  .card .yr { font-variant-numeric: tabular-nums; }
+  .card .zone {
+    margin-left: auto;
+    font-size: 11px;
+    letter-spacing: .1em;
+    color: var(--blue-ink);
+    background: var(--blue-soft);
+    padding: 2px 7px;
+    border-radius: 2px;
+  }
+
+  .empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 64px 24px;
+    background: var(--hatch), var(--surface);
+    border: 1px solid var(--rule-2);
+    border-radius: 4px;
+  }
+  /* the hatching stops where the annotation goes — contrast.md §8 */
+  .empty span {
+    display: inline-block;
+    background: var(--surface);
+    color: var(--ink-3);
+    font-size: 15px;
+    padding: 9px 18px;
+    border-radius: 3px;
+  }
+
+  /* skeletons — recipes.md §22 */
+  .skel {
+    border: 1px solid var(--rule-2);
+    border-radius: 4px;
+    background: var(--raised);
+    overflow: hidden;
+  }
+  .skel .m { aspect-ratio: 4 / 3; background: var(--surface); }
+  .skel .b { padding: 15px 17px 20px; display: grid; gap: 9px; }
+  .skel .l { height: 12px; border-radius: 2px; background: var(--surface); }
+  .skel .l.short { width: 52%; }
+  .shimmer { position: relative; overflow: hidden; }
+  .shimmer::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--ink) 4%, transparent) 50%, transparent 70%);
+    translate: -100% 0;
+    animation: sweep 1.8s linear infinite;
+  }
+  @keyframes sweep { to { translate: 100% 0; } }
+
+  /* ---------------- first sight ---------------- */
+
+  /* The phrase is permanently emphasised — weight and ink, set once, never
+     animated: font-weight changes advance widths and would reflow the line.
+     Only the highlight moves, and only the first time the phrase is seen. */
+  /* The resting state — block plus ink text — is what a reader gets with no
+     JavaScript and under reduced motion. Everything below is additive. */
+  mark.fs {
+    background-color: transparent;   /* the UA sheet paints <mark> yellow */
+    background-image: linear-gradient(var(--hl), var(--hl));
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    background-position: left center;
+    color: var(--ink);
+    font-weight: 600;
+    padding: .04em .16em;
+    margin: 0 -.16em;
+    border-radius: 2px;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+
+  /* Armed by script before first paint: no block, and no words yet. */
+  html.fs-armed mark.fs {
+    background-size: 0% 100%;
+    color: transparent;
+  }
+
+  /* A solid block of the theme colour wipes in, holds — and only as it drops
+     to the resting tint do the words arrive. Nothing is ever half-readable:
+     during the solid phase there is no text on the block at all, which is the
+     same contract as entering from opacity 0. */
+  @keyframes first-sight {
+    0% {
+      background-size: 0% 100%;
+      background-image: linear-gradient(var(--blue), var(--blue));
+      color: transparent;
+      animation-timing-function: cubic-bezier(.25, .1, .35, 1);
+    }
+    30%, 60% {
+      background-size: 100% 100%;
+      background-image: linear-gradient(var(--blue), var(--blue));
+      color: transparent;
+    }
+    100% {
+      background-size: 100% 100%;
+      background-image: linear-gradient(var(--hl), var(--hl));
+      color: var(--ink);
+    }
+  }
+  html.fs-armed mark.fs.seen {
+    animation: first-sight 1s linear var(--fs-delay, 0s) both;
+  }
+
+  /* ---------------- reveal ---------------- */
+
+  .reveal { opacity: 0; translate: 0 12px; }
+  .reveal.in {
+    opacity: 1;
+    translate: 0;
+    transition: opacity .4s cubic-bezier(.25,.1,.35,1), translate .4s cubic-bezier(.25,.1,.35,1);
+  }
+
+  /* ---------------- sections ---------------- */
+
+  section { padding: 64px 0; border-top: 1px solid var(--rule-2); }
+  h2 {
+    font-family: var(--f-display);
+    font-weight: 400;
+    font-size: clamp(30px, 4.4vw, 44px);
+    letter-spacing: -.01em;
+    line-height: 1.1;
+    margin: 10px 0 26px;
+    text-wrap: balance;
+  }
+  .lede { color: var(--ink-2); max-width: 60ch; margin: 0 0 30px; }
+
+  /* accordion — recipes.md §9 */
+  .acc { border-top: 1px solid var(--rule-2); max-width: 780px; }
+  .acc-item { border-bottom: 1px solid var(--rule-2); }
+  .acc-head {
+    appearance: none;
+    font: inherit;
+    width: 100%;
+    background: none;
+    border: 0;
+    text-align: left;
+    padding: 18px 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    color: var(--ink);
+    font-size: 17px;
+    transition: color var(--t-lumin);
+  }
+  .acc-head:hover { color: var(--blue-ink); }
+  .acc-head:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+  .acc-sign { color: var(--ink-3); flex: none; transition: rotate var(--d-enter) var(--sp-enter), color var(--t-lumin); }
+  .acc-item.open .acc-sign { rotate: 45deg; color: var(--blue-ink); }
+  .acc-panel { height: 0; overflow: hidden; transition: height var(--d-layout) var(--sp-layout); }
+  .acc-panel > div { padding: 0 4px 22px; color: var(--ink-2); max-width: 62ch; }
+  .acc-panel > div p { margin: 0; }
+
+  /* ---------------- dialog — recipes.md §6 + §7 ---------------- */
+
+  .scrim {
+    position: fixed;
+    inset: 0;
+    background: var(--scrim);
+    opacity: 0;
+    visibility: hidden;
+    z-index: 50;
+    transition: opacity var(--t-exit), visibility 0s .15s;
+  }
+  .scrim.on { opacity: 1; visibility: visible; transition: opacity .2s cubic-bezier(.25,.1,.35,1), visibility 0s; }
+
+  .dialog {
+    position: fixed;
+    z-index: 60;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    pointer-events: none;
+    visibility: hidden;
+  }
+  .dialog.on { visibility: visible; }
+  .panel {
+    pointer-events: auto;
+    width: min(680px, 100%);
+    max-height: min(86vh, 720px);
+    overflow: auto;
+    background: var(--raised);
+    border: 1px solid var(--rule-2);
+    border-radius: 6px;
+    box-shadow: var(--e4), var(--rim);
+    opacity: 0;
+    scale: .96;
+    translate: 0 8px;
+    transition: opacity var(--t-exit), scale var(--t-exit), translate var(--t-exit);
+  }
+  .dialog.on .panel {
+    opacity: 1;
+    scale: 1;
+    translate: 0;
+    transition: opacity .2s cubic-bezier(.25,.1,.35,1),
+                scale var(--d-enter) var(--sp-enter),
+                translate var(--d-enter) var(--sp-enter);
+  }
+  .panel-mark {
+    aspect-ratio: 16 / 7;
+    background: var(--hatch), var(--surface);
+    border-bottom: 1px solid var(--rule-2);
+    color: var(--ink-3);
+    display: block;
+  }
+  .panel-body { padding: 26px 30px 30px; }
+  .panel h3 {
+    font-family: var(--f-display);
+    font-weight: 400;
+    font-size: 34px;
+    line-height: 1.1;
+    margin: 8px 0 4px;
+  }
+  .panel .sub { color: var(--ink-3); font-size: 14px; margin: 0 0 20px; font-variant-numeric: tabular-nums; }
+  .panel p.desc { color: var(--ink-2); margin: 0 0 22px; max-width: 56ch; }
+  .specs { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px 22px; margin-bottom: 26px; }
+  .specs div { border-top: 1px solid var(--rule-2); padding-top: 9px; }
+  .specs dt { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+  .specs dd { margin: 2px 0 0; font-size: 15px; font-variant-numeric: tabular-nums; }
+  .panel-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn.primary {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: #fff;
+  }
+  :root[data-theme="dark"] .btn.primary,
+  :root:not([data-theme="light"]) .btn.primary { color: #12142B; }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .btn.primary { color: #fff; }
+  }
+  .btn.primary:hover { background: color-mix(in srgb, var(--blue) 88%, var(--ink)); }
+  .btn[disabled] {
+    color: var(--ink-off);
+    background: var(--surface);
+    border-color: var(--rule-2);
+    box-shadow: none;
+    cursor: default;
+  }
+  .btn[disabled]:hover { translate: 0; box-shadow: none; background: var(--surface); }
+
+  /* the flying mark — recipes.md §7 shared element */
+  .flier {
+    position: fixed;
+    z-index: 70;
+    pointer-events: none;
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--hatch), var(--surface);
+    box-shadow: var(--e3);
+    transform-origin: top left;
+    display: none;
+  }
+
+  /* ---------------- toasts — recipes.md §11 ---------------- */
+
+  .toasts {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 80;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 10px;
+    pointer-events: none;
+  }
+  .toast {
+    pointer-events: auto;
+    background: var(--raised);
+    border: 1px solid var(--rule-2);
+    border-left: 2px solid var(--blue);
+    border-radius: 4px;
+    box-shadow: var(--e3), var(--rim);
+    padding: 12px 16px;
+    font-size: 14px;
+    max-width: 300px;
+    opacity: 0;
+    translate: 24px 0;
+    transition: opacity .2s cubic-bezier(.25,.1,.35,1),
+                translate var(--d-enter) var(--sp-enter);
+  }
+  .toast.in { opacity: 1; translate: 0; }
+  .toast.out {
+    opacity: 0;
+    translate: 16px 0;
+    transition: opacity var(--t-exit), translate var(--t-exit);
+  }
+  .toast b { display: block; font-weight: 600; }
+  .toast span { color: var(--ink-3); }
+
+  /* ---------------- footer ---------------- */
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding: 34px 0 56px;
+    color: var(--ink-3);
+    font-size: 13.5px;
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  footer a { color: var(--ink-2); text-underline-offset: 3px; }
+
+  @media (max-width: 820px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 34px; }
+    .navlinks { display: none; }
+    .bar { align-items: stretch; }
+  }
+
+  /* recipes.md §25 — drop the movement, keep the fade */
+  @media (prefers-reduced-motion: reduce) {
+    .card, .btn, .menu, .menu button, .panel, .toast, .reveal.in, .underline, .acc-sign {
+      transition-property: opacity, background-color, background, box-shadow, color, border-color !important;
+    }
+    .card:hover, .card:active, .btn:hover, .btn:active { translate: 0 !important; scale: 1 !important; }
+    .reveal { translate: 0; }
+    .acc-panel { transition-duration: .01ms; }
+    .shimmer::before { animation: none; }
+    .flier { display: none !important; }
+    mark.fs.seen { animation: none; }
+    html.fs-armed mark.fs { background-size: 100% 100%; }
+  }
+</style>
+</head>
+<body>
+<script>
+  /* runs during parse, before the marks are painted */
+  if (!matchMedia("(prefers-reduced-motion: reduce)").matches &&
+      "IntersectionObserver" in window) {
+    document.documentElement.classList.add("fs-armed");
+  }
+</script>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="brand">度量<em>衡</em></div>
+    <nav class="navlinks">
+      <a href="#collection">展件</a>
+      <a href="#visit">參觀資訊</a>
+      <a href="#about">關於特展</a>
+    </nav>
+    <button class="btn" id="theme-toggle" type="button" aria-label="切換深淺主題">
+      <span id="theme-label">深色</span>
+    </button>
+  </div>
+</header>
+
+<main>
+  <div class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <div class="label">1650 – 1922 · 常設特展</div>
+        <h1>人類如何學會<br><em>相信</em>一個數字</h1>
+      </div>
+      <div>
+        <p style="margin-bottom:26px">
+          在儀器出現之前，長度是手臂、時間是影子、<mark class="fs">重量是感覺</mark>。這個展覽收集了四十二件把感覺換成刻度的器物。
+        </p>
+        <dl class="hero-meta">
+          <div><dt>展期</dt><dd>2026.03.14 – 2026.11.29</dd></div>
+          <div><dt>地點</dt><dd>南館 2F – 4F</dd></div>
+          <div><dt>展件</dt><dd id="count-total">42 件</dd></div>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <section id="collection" style="border-top:0; padding-top:34px">
+    <div class="wrap">
+      <div class="label">館藏精選</div>
+      <h2>八件不必解釋就看得懂的器物</h2>
+
+      <div class="bar">
+        <div class="tabs" role="tablist" aria-label="樓層">
+          <button class="tab" role="tab" aria-selected="true" data-floor="all" type="button">全部</button>
+          <button class="tab" role="tab" aria-selected="false" data-floor="2" type="button">二樓</button>
+          <button class="tab" role="tab" aria-selected="false" data-floor="3" type="button">三樓</button>
+          <button class="tab" role="tab" aria-selected="false" data-floor="4" type="button">四樓</button>
+          <span class="underline" aria-hidden="true"></span>
+        </div>
+
+        <div class="filter">
+          <button class="btn" id="zone-btn" type="button" aria-haspopup="true" aria-expanded="false">
+            <span id="zone-label">所有展區</span>
+            <span class="caret" aria-hidden="true">▼</span>
+          </button>
+          <div class="menu" id="zone-menu" role="menu" aria-labelledby="zone-btn"></div>
+        </div>
+      </div>
+
+      <div class="grid" id="grid" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section id="visit">
+    <div class="wrap reveal">
+      <div class="label">參觀資訊</div>
+      <h2>來之前值得先知道的事</h2>
+      <div class="acc" id="acc">
+        <div class="acc-item">
+          <button class="acc-head" type="button" aria-expanded="false">
+            <span>可以觸摸展件嗎？</span><span class="acc-sign" aria-hidden="true">＋</span>
+          </button>
+          <div class="acc-panel"><div><p>三樓「手的尺度」單元有六件複製品開放觸摸，包含一組銅製砝碼與一把游標卡尺。原件一律不開放，因為皮膚的油脂會加速黃銅氧化，而這批器物的刻度正是靠表面反差才讀得出來。</p></div></div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-head" type="button" aria-expanded="false">
+            <span>導覽場次怎麼安排？</span><span class="acc-sign" aria-hidden="true">＋</span>
+          </button>
+          <div class="acc-panel"><div><p>平日每天兩場，十一點與下午三點，各五十分鐘，從二樓大廳出發。假日加開下午一點場。導覽員會示範六分儀的實際操作，那是全場唯一會動的展件。</p></div></div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-head" type="button" aria-expanded="false">
+            <span>展場很暗，是故意的嗎？</span><span class="acc-sign" aria-hidden="true">＋</span>
+          </button>
+          <div class="acc-panel"><div><p>是。紙質標籤與部分漆面對紫外線敏感，全場照度控制在五十勒克斯以下。展櫃內用的是低色溫的側向打光，目的是讓刻度的陰影長一點——刻度看得清楚，靠的是影子而不是亮度。</p></div></div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-head" type="button" aria-expanded="false">
+            <span>可以拍照嗎？</span><span class="acc-sign" aria-hidden="true">＋</span>
+          </button>
+          <div class="acc-panel"><div><p>可以，但請關閉閃光燈與補光燈。三腳架需事先申請。四樓的水銀氣壓計單元全區禁止攝影，那是借展方的條件。</p></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="about">
+    <div class="wrap reveal">
+      <div class="label">關於特展</div>
+      <h2>刻度是一種承諾</h2>
+      <p class="lede">
+        每一把尺都在主張一件事：<mark class="fs">這個世界可以被分割成相等的份</mark>，而且分割的方式對所有人都一樣。
+        這個展覽想講的不是儀器多精密，而是人們花了多久才願意相信一根銅棒上的刻痕，
+        <mark class="fs">勝過相信自己的手感</mark>。
+      </p>
+      <p class="lede" style="margin-bottom:0">
+        展件來自本館典藏與七個私人收藏。年代最早的是一六五○年的攜行式日晷，
+        最晚的是一九二二年一組用來檢驗透鏡的曲率規——中間隔了兩百七十二年，
+        而人類對「準」這個字的要求，<mark class="fs">從半個指節縮到了千分之一毫米</mark>。
+      </p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap" style="display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;width:100%">
+    <span>度量衡特展 · 示範用虛構展覽</span>
+    <span>動態依 <a href="https://github.com/chanLik1208-dev/Dynamization">Dynamization</a> 規格實作</span>
+  </div>
+</footer>
+
+<div class="scrim" id="scrim"></div>
+<div class="dialog" id="dialog" role="dialog" aria-modal="true" aria-labelledby="dlg-title">
+  <div class="panel" id="panel">
+    <div class="panel-mark" id="panel-mark"></div>
+    <div class="panel-body">
+      <div class="label" id="dlg-zone">—</div>
+      <h3 id="dlg-title">—</h3>
+      <p class="sub" id="dlg-sub">—</p>
+      <p class="desc" id="dlg-desc">—</p>
+      <dl class="specs" id="dlg-specs"></dl>
+      <div class="panel-actions">
+        <button class="btn primary" id="dlg-add" type="button">加入我的動線</button>
+        <button class="btn" id="dlg-close" type="button">關閉</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="flier" id="flier" aria-hidden="true"></div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ------------------------------------------------------------------ data */
+
+  var ZONES = {
+    precision: "精密",
+    mass: "質量",
+    air: "大氣",
+    sea: "航海",
+    sound: "聲學",
+    time: "時間"
+  };
+
+  var ITEMS = [
+    { id: "vernier", name: "銅製游標卡尺", yr: 1908, floor: "3", zone: "precision", maker: "巴黎 · 莫瑞爾工坊", mat: "黃銅、鋼", size: "230 mm", res: "0.05 mm",
+      desc: "游標的原理是把一段刻度切成比主尺稍短的等份，讓兩排刻痕永遠只有一條對得齊。對齊的那一條就是答案。這件的游標面經過手工刮花處理，是為了在側光下讓刻痕的邊緣產生陰影。" },
+    { id: "barometer", name: "水銀氣壓計", yr: 1871, floor: "4", zone: "air", maker: "倫敦 · 奈格瑞蒂父子", mat: "桃花心木、水銀", size: "980 mm", res: "0.1 inHg",
+      desc: "一根倒插在水銀池裡的玻璃管，管內的空柱高度就是大氣壓在你身上的重量。它不需要電、不需要校正，只需要地心引力保持不變。館方每季檢查一次水銀柱是否斷裂。" },
+    { id: "sextant", name: "六分儀", yr: 1793, floor: "2", zone: "sea", maker: "樸茨茅斯 · 杜蘭德", mat: "黃銅、烏木", size: "扇形半徑 190 mm", res: "10 弧秒",
+      desc: "把太陽拉到地平線上，讀出兩者的夾角，再查一次表，你就知道自己在地球上的哪一條緯線。這是全場唯一在導覽時會被實際操作的展件——它的鏡面每兩週重鍍一次。" },
+    { id: "fork", name: "音叉標準器", yr: 1859, floor: "2", zone: "sound", maker: "巴黎 · 柯尼希", mat: "鋼", size: "A = 435 Hz", res: "±0.1 Hz",
+      desc: "十九世紀的樂團各吹各的調，直到有人決定把一個頻率鎖進一塊鋼裡。這支音叉是巴黎標準音高的實體定義，也就是說：在那個年代，A 這個音就是這塊金屬。" },
+    { id: "weights", name: "分析天平砝碼組", yr: 1884, floor: "3", zone: "mass", maker: "漢堡 · 舒馬赫", mat: "鍍鉑黃銅", size: "1 mg – 200 g，十七件", res: "0.1 mg",
+      desc: "每一顆都要跟一顆看不見的原器對得上。鍍鉑是為了防止氧化改變質量——一層薄薄的銅綠，就足以讓最小的那顆砝碼失去意義。收在原配的桃木盒裡，凹槽是照著每顆的形狀挖的。" },
+    { id: "sundial", name: "攜行式日晷", yr: 1650, floor: "4", zone: "time", maker: "紐倫堡 · 卡爾納", mat: "象牙、黃銅", size: "摺疊後 78 × 62 mm", res: "約 15 分鐘",
+      desc: "全場年代最早的一件。使用前要先用內建的磁針把它轉到正北，再依緯度調整晷針的角度——換句話說，你得先知道自己在哪，才問得出現在幾點。" },
+    { id: "curvature", name: "透鏡曲率規", yr: 1922, floor: "3", zone: "precision", maker: "耶拿 · 蔡司", mat: "鋼、瑪瑙", size: "跨距 50 mm", res: "0.001 mm",
+      desc: "三個腳點壓在鏡面上，中央的探針量出弧度的最高點，換算回去就是曲率半徑。接觸點用瑪瑙做的，因為鋼會在鏡面上留下刮痕，而刮痕會改變它要量的那個東西。" },
+    { id: "hygrometer", name: "髮絲濕度計", yr: 1830, floor: "4", zone: "air", maker: "日內瓦 · 索緒爾式", mat: "黃銅、人髮", size: "直徑 145 mm", res: "5 % RH",
+      desc: "感測元件是一束脫脂過的金髮。頭髮吸水會變長，變長就拉動指針。這聽起來像玩笑，但它在一百年間是最可靠的濕度量測方式，而且到現在還在動。" }
+  ];
+
+  /* ------------------------------------------------------------- generated marks */
+
+  function mark(id, w, h) {
+    var c = "currentColor";
+    var s = '<svg viewBox="0 0 ' + w + ' ' + h + '" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">';
+    var cx = w / 2, cy = h / 2, i;
+    var g = '<g fill="none" stroke="' + c + '" stroke-width="1.1" opacity=".62">';
+
+    if (id === "vernier" || id === "curvature") {
+      for (i = 0; i <= 26; i++) {
+        var x = cx - 130 + i * 10;
+        var len = i % 5 === 0 ? 26 : 13;
+        g += '<line x1="' + x + '" y1="' + (cy - 4) + '" x2="' + x + '" y2="' + (cy - 4 - len) + '"/>';
+      }
+      g += '<line x1="' + (cx - 132) + '" y1="' + (cy - 2) + '" x2="' + (cx + 132) + '" y2="' + (cy - 2) + '"/>';
+      g += '<rect x="' + (cx - 46) + '" y="' + (cy + 8) + '" width="92" height="34" rx="2"/>';
+      for (i = 0; i <= 9; i++) {
+        g += '<line x1="' + (cx - 44 + i * 9.6) + '" y1="' + (cy + 10) + '" x2="' + (cx - 44 + i * 9.6) + '" y2="' + (cy + 22) + '"/>';
+      }
+    } else if (id === "barometer" || id === "hygrometer") {
+      g += '<circle cx="' + cx + '" cy="' + cy + '" r="58"/><circle cx="' + cx + '" cy="' + cy + '" r="48"/>';
+      for (i = 0; i < 36; i++) {
+        var a = (i / 36) * Math.PI * 2 - Math.PI / 2;
+        var r1 = 48, r2 = i % 3 === 0 ? 38 : 43;
+        g += '<line x1="' + (cx + Math.cos(a) * r1) + '" y1="' + (cy + Math.sin(a) * r1) +
+             '" x2="' + (cx + Math.cos(a) * r2) + '" y2="' + (cy + Math.sin(a) * r2) + '"/>';
+      }
+      g += '<line x1="' + cx + '" y1="' + cy + '" x2="' + (cx + 30) + '" y2="' + (cy - 26) + '" stroke-width="1.8"/>';
+      g += '<circle cx="' + cx + '" cy="' + cy + '" r="3.4" fill="' + c + '" stroke="none"/>';
+    } else if (id === "sextant") {
+      g += '<path d="M ' + (cx - 78) + ' ' + (cy + 46) + ' A 92 92 0 0 1 ' + (cx + 78) + ' ' + (cy + 46) + '"/>';
+      g += '<line x1="' + (cx - 78) + '" y1="' + (cy + 46) + '" x2="' + cx + '" y2="' + (cy - 46) + '"/>';
+      g += '<line x1="' + (cx + 78) + '" y1="' + (cy + 46) + '" x2="' + cx + '" y2="' + (cy - 46) + '"/>';
+      for (i = 0; i <= 12; i++) {
+        var t = -Math.PI + (i / 12) * Math.PI;
+        g += '<line x1="' + (cx + Math.cos(t) * 92) + '" y1="' + (cy + 46 + Math.sin(t) * 92) +
+             '" x2="' + (cx + Math.cos(t) * 82) + '" y2="' + (cy + 46 + Math.sin(t) * 82) + '"/>';
+      }
+      g += '<line x1="' + cx + '" y1="' + (cy - 46) + '" x2="' + (cx + 40) + '" y2="' + (cy + 46) + '" stroke-width="1.6"/>';
+    } else if (id === "fork") {
+      g += '<path d="M ' + (cx - 22) + ' ' + (cy - 58) + ' L ' + (cx - 22) + ' ' + (cy + 18) +
+           ' Q ' + cx + ' ' + (cy + 46) + ' ' + (cx + 22) + ' ' + (cy + 18) + ' L ' + (cx + 22) + ' ' + (cy - 58) + '" stroke-width="1.6"/>';
+      g += '<line x1="' + cx + '" y1="' + (cy + 40) + '" x2="' + cx + '" y2="' + (cy + 64) + '" stroke-width="1.6"/>';
+      for (i = 1; i <= 3; i++) {
+        g += '<path d="M ' + (cx - 44 - i * 16) + ' ' + cy + ' q 8 -' + (i * 7) + ' 16 0 q 8 ' + (i * 7) + ' 16 0" opacity="' + (0.7 - i * 0.16) + '"/>';
+        g += '<path d="M ' + (cx + 44 + i * 16) + ' ' + cy + ' q -8 -' + (i * 7) + ' -16 0 q -8 ' + (i * 7) + ' -16 0" opacity="' + (0.7 - i * 0.16) + '"/>';
+      }
+    } else if (id === "weights") {
+      var xs = [-96, -58, -24, 6, 34, 60, 84], hs = [56, 46, 38, 31, 25, 20, 16], ws = [30, 26, 22, 19, 16, 13, 11];
+      for (i = 0; i < xs.length; i++) {
+        var bx = cx + xs[i], bh = hs[i], bw = ws[i];
+        g += '<path d="M ' + (bx - bw / 2) + ' ' + (cy + 44) + ' L ' + (bx - bw / 2 + 3) + ' ' + (cy + 44 - bh) +
+             ' L ' + (bx + bw / 2 - 3) + ' ' + (cy + 44 - bh) + ' L ' + (bx + bw / 2) + ' ' + (cy + 44) + ' Z"/>';
+      }
+      g += '<line x1="' + (cx - 118) + '" y1="' + (cy + 44) + '" x2="' + (cx + 106) + '" y2="' + (cy + 44) + '"/>';
+    } else {
+      /* sundial */
+      g += '<rect x="' + (cx - 62) + '" y="' + (cy - 44) + '" width="124" height="88" rx="3"/>';
+      g += '<line x1="' + (cx - 62) + '" y1="' + (cy + 12) + '" x2="' + (cx + 62) + '" y2="' + (cy + 12) + '"/>';
+      g += '<path d="M ' + (cx - 40) + ' ' + (cy + 12) + ' L ' + (cx + 28) + ' ' + (cy - 34) + '" stroke-width="1.7"/>';
+      for (i = 0; i <= 8; i++) {
+        var aa = Math.PI + (i / 8) * Math.PI;
+        g += '<line x1="' + (cx - 40 + Math.cos(aa) * 0) + '" y1="' + (cy + 12) + '" x2="' +
+             (cx - 40 + Math.cos(aa) * 46) + '" y2="' + (cy + 12 + Math.sin(aa) * 46) + '" opacity=".5"/>';
+      }
+      g += '<circle cx="' + (cx + 44) + '" cy="' + (cy + 28) + '" r="9"/>';
+    }
+    return s + g + '</g></svg>';
+  }
+
+  /* ---------------------------------------------------------------- state */
+
+  var state = { floor: "all", zone: "all" };
+  var grid = document.getElementById("grid");
+
+  function visible() {
+    return ITEMS.filter(function (it) {
+      return (state.floor === "all" || it.floor === state.floor) &&
+             (state.zone === "all" || it.zone === state.zone);
+    });
+  }
+
+  function cardHTML(it) {
+    return '<button class="card" data-id="' + it.id + '" type="button">' +
+      '<span class="mark" data-mark="' + it.id + '">' + mark(it.id, 320, 240) + '</span>' +
+      '<span class="body">' +
+        '<span class="t">' + it.name + '</span>' +
+        '<span class="meta"><span class="yr">' + it.yr + '</span>' +
+        '<span>' + it.floor + 'F</span>' +
+        '<span class="zone">' + ZONES[it.zone] + '</span></span>' +
+      '</span></button>';
+  }
+
+  /* recipes.md §11 — the remaining items close the gap, they do not teleport */
+  function render(animate) {
+    var before = {};
+    if (animate && !reduced) {
+      Array.prototype.forEach.call(grid.querySelectorAll(".card"), function (el) {
+        before[el.dataset.id] = el.getBoundingClientRect();
+      });
+    }
+
+    var list = visible();
+    grid.innerHTML = list.length
+      ? list.map(cardHTML).join("")
+      : '<p class="empty"><span>這個組合下沒有展件。換一個樓層或展區試試。</span></p>';
+
+    if (reduced) { return; }
+
+    var cards = Array.prototype.slice.call(grid.querySelectorAll(".card"));
+    cards.forEach(function (el, i) {
+      var b = before[el.dataset.id];
+      var a = el.getBoundingClientRect();
+      if (b) {
+        /* it was already here: invert, then release */
+        var dx = b.left - a.left, dy = b.top - a.top;
+        if (dx || dy) {
+          el.style.transition = "none";
+          el.style.translate = dx + "px " + dy + "px";
+          void el.offsetWidth;
+          el.style.transition = "translate var(--d-layout) var(--sp-layout)";
+          el.style.translate = "0px 0px";
+        }
+      } else {
+        /* it is new: enter, staggered */
+        el.style.transition = "none";
+        el.style.opacity = "0";
+        el.style.translate = "0 8px";
+        void el.offsetWidth;
+        el.style.transition = "opacity .25s cubic-bezier(.25,.1,.35,1) " + (i * 0.04) + "s, translate var(--d-enter) var(--sp-enter) " + (i * 0.04) + "s";
+        el.style.opacity = "1";
+        el.style.translate = "0px 0px";
+      }
+    });
+  }
+
+  /* -------------------------------------------------------------- skeleton */
+
+  function skeletons(n) {
+    var out = "";
+    for (var i = 0; i < n; i++) {
+      out += '<div class="skel shimmer"><div class="m"></div><div class="b"><div class="l"></div><div class="l short"></div></div></div>';
+    }
+    return out;
+  }
+  grid.innerHTML = skeletons(8);
+  setTimeout(function () { render(false); }, reduced ? 0 : 900);
+
+  /* ------------------------------------------------------------------ tabs */
+
+  var tabs = Array.prototype.slice.call(document.querySelectorAll(".tab"));
+  var underline = document.querySelector(".underline");
+
+  function moveUnderline() {
+    var active = document.querySelector('.tab[aria-selected="true"]');
+    if (!active || !underline) { return; }
+    underline.style.translate = active.offsetLeft + "px 0";
+    underline.style.scale = active.offsetWidth + " 1";
+  }
+  tabs.forEach(function (t) {
+    t.addEventListener("click", function () {
+      tabs.forEach(function (o) { o.setAttribute("aria-selected", String(o === t)); });
+      state.floor = t.dataset.floor;
+      moveUnderline();
+      render(true);
+    });
+  });
+  window.addEventListener("resize", moveUnderline);
+  setTimeout(moveUnderline, 0);
+
+  /* ---------------------------------------------------------------- filter */
+
+  var zoneBtn = document.getElementById("zone-btn");
+  var zoneMenu = document.getElementById("zone-menu");
+  var zoneLabel = document.getElementById("zone-label");
+
+  function buildMenu() {
+    var rows = [["all", "所有展區", ITEMS.length]];
+    Object.keys(ZONES).forEach(function (k) {
+      rows.push([k, ZONES[k] + "區", ITEMS.filter(function (i) { return i.zone === k; }).length]);
+    });
+    zoneMenu.innerHTML = rows.map(function (r, i) {
+      return '<button role="menuitemradio" type="button" data-zone="' + r[0] + '" ' +
+        'aria-checked="' + (state.zone === r[0]) + '" style="--stagger:' + (i * 0.03) + 's">' +
+        '<span>' + r[1] + '</span><span class="n">' + r[2] + '</span></button>';
+    }).join("");
+  }
+  buildMenu();
+
+  function setMenu(open) {
+    zoneMenu.classList.toggle("open", open);
+    zoneBtn.setAttribute("aria-expanded", String(open));
+  }
+  zoneBtn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    setMenu(!zoneMenu.classList.contains("open"));
+  });
+  zoneMenu.addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-zone]");
+    if (!b) { return; }
+    state.zone = b.dataset.zone;
+    zoneLabel.textContent = b.querySelector("span").textContent;
+    buildMenu();
+    setMenu(false);
+    render(true);
+  });
+  document.addEventListener("click", function () { setMenu(false); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") { setMenu(false); } });
+
+  /* ---------------------------------------------------------------- toasts */
+
+  var toasts = document.getElementById("toasts");
+  function toast(title, sub) {
+    var el = document.createElement("div");
+    el.className = "toast";
+    el.innerHTML = "<b>" + title + "</b><span>" + sub + "</span>";
+    toasts.appendChild(el);
+    requestAnimationFrame(function () { el.classList.add("in"); });
+    setTimeout(function () {
+      el.classList.remove("in");
+      el.classList.add("out");
+      /* pitfalls.md §7 — remove on a timer, not on transitionend, which may never fire */
+      setTimeout(function () { if (el.parentNode) { el.parentNode.removeChild(el); } }, 200);
+    }, 3200);
+  }
+
+  /* ---------------------------------------------------------------- dialog */
+
+  var scrim = document.getElementById("scrim");
+  var dialog = document.getElementById("dialog");
+  var panel = document.getElementById("panel");
+  var panelMark = document.getElementById("panel-mark");
+  var flier = document.getElementById("flier");
+  var current = null, lastFocus = null;
+
+  function openDialog(it, sourceMark) {
+    current = it;
+    lastFocus = document.activeElement;
+
+    document.getElementById("dlg-zone").textContent = ZONES[it.zone] + "區 · " + it.floor + "F";
+    document.getElementById("dlg-title").textContent = it.name;
+    document.getElementById("dlg-sub").textContent = it.yr + " · " + it.maker;
+    document.getElementById("dlg-desc").textContent = it.desc;
+    document.getElementById("dlg-specs").innerHTML =
+      [["材質", it.mat], ["尺寸", it.size], ["解析度", it.res], ["年代", String(it.yr)]]
+        .map(function (r) { return "<div><dt>" + r[0] + "</dt><dd>" + r[1] + "</dd></div>"; }).join("");
+    panelMark.innerHTML = mark(it.id, 640, 280);
+
+    var addBtn = document.getElementById("dlg-add");
+    addBtn.disabled = false;
+    addBtn.textContent = "加入我的動線";
+
+    scrim.classList.add("on");
+    dialog.classList.add("on");
+    document.body.style.overflow = "hidden";
+    document.getElementById("dlg-close").focus();
+
+    /* recipes.md §7 — the mark flies from the card to the panel */
+    if (!reduced && sourceMark) {
+      requestAnimationFrame(function () {
+        var from = sourceMark.getBoundingClientRect();
+        var to = panelMark.getBoundingClientRect();
+        if (!to.width) { return; }
+        /* SKILL.md §6 — the flier is sized at its destination and moved by
+           transform alone. The aspect ratio differs between card and panel, so
+           per pitfalls.md §3 this animates position with a uniform scale and
+           cross-fades, rather than stretching the artwork. */
+        flier.innerHTML = mark(it.id, 640, 280);
+        flier.style.display = "block";
+        flier.style.left = to.left + "px";
+        flier.style.top = to.top + "px";
+        flier.style.width = to.width + "px";
+        flier.style.height = to.height + "px";
+        var s = from.width / to.width;
+        flier.style.transition = "none";
+        flier.style.translate = (from.left - to.left) + "px " + (from.top - to.top) + "px";
+        flier.style.scale = s;
+        flier.style.opacity = "1";
+        void flier.offsetWidth;
+        flier.style.transition =
+          "translate var(--d-enter) var(--sp-enter), scale var(--d-enter) var(--sp-enter)," +
+          "opacity .18s cubic-bezier(.25,.1,.35,1) .16s";
+        flier.style.translate = "0px 0px";
+        flier.style.scale = "1";
+        flier.style.opacity = "0";
+        setTimeout(function () { flier.style.display = "none"; }, 380);
+      });
+    }
+  }
+
+  function closeDialog() {
+    /* feel.md §5 — the content leaves first, the scrim leaves last */
+    dialog.classList.remove("on");
+    setTimeout(function () { scrim.classList.remove("on"); }, 60);
+    document.body.style.overflow = "";
+    if (lastFocus && lastFocus.focus) { lastFocus.focus(); }
+    current = null;
+  }
+
+  grid.addEventListener("click", function (e) {
+    var card = e.target.closest(".card");
+    if (!card) { return; }
+    var it = ITEMS.filter(function (i) { return i.id === card.dataset.id; })[0];
+    if (it) { openDialog(it, card.querySelector(".mark")); }
+  });
+
+  document.getElementById("dlg-close").addEventListener("click", closeDialog);
+  scrim.addEventListener("click", closeDialog);
+  dialog.addEventListener("click", function (e) { if (e.target === dialog) { closeDialog(); } });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && current) { closeDialog(); }
+  });
+
+  document.getElementById("dlg-add").addEventListener("click", function () {
+    if (!current) { return; }
+    /* feel.md §9 — the success path is applied immediately, not animated into place */
+    this.disabled = true;
+    this.textContent = "已加入動線";
+    toast("已加入動線", current.name + " · " + current.floor + "F");
+  });
+
+  /* ------------------------------------------------------------- accordion */
+
+  document.getElementById("acc").addEventListener("click", function (e) {
+    var head = e.target.closest(".acc-head");
+    if (!head) { return; }
+    var item = head.parentNode;
+    var pane = item.querySelector(".acc-panel");
+    var open = item.classList.contains("open");
+
+    if (open) {
+      /* pitfalls.md §3 — measure once, then animate from a real number */
+      pane.style.height = pane.scrollHeight + "px";
+      void pane.offsetWidth;
+      pane.style.height = "0px";
+      item.classList.remove("open");
+      head.setAttribute("aria-expanded", "false");
+    } else {
+      pane.style.height = pane.scrollHeight + "px";
+      item.classList.add("open");
+      head.setAttribute("aria-expanded", "true");
+      /* release to auto once it has arrived, so the panel still reflows with its content */
+      setTimeout(function () {
+        if (item.classList.contains("open")) { pane.style.height = "auto"; }
+      }, reduced ? 10 : 420);
+    }
+  });
+
+  /* ----------------------------------------------- first sight + reveal */
+
+  var marks = Array.prototype.slice.call(document.querySelectorAll("mark.fs"));
+  var fired = 0;
+
+  function fire(el) {
+    if (!el || el.classList.contains("seen")) { return; }
+    el.style.setProperty("--fs-delay", (fired % 2) * 0.12 + "s");
+    el.classList.add("seen");
+    fired++;
+  }
+
+  function firePhrasesIn(root) {
+    marks.forEach(function (el) { if (root.contains(el)) { fire(el); } });
+  }
+
+  if ("IntersectionObserver" in window) {
+    /* Sections fade in on arrival — recipes.md §3: once, at a real threshold. */
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) { return; }
+        en.target.classList.add("in");
+        io.unobserve(en.target);
+        /* A phrase inside a section that is still at opacity 0 would play its
+           whole highlight unseen, and the reader would meet it already
+           finished — which looks exactly like no highlight at all. So the
+           section's own entrance starts first, and the phrases follow it. */
+        if (!reduced) { setTimeout(function () { firePhrasesIn(en.target); }, 220); }
+      });
+    }, { threshold: 0.3 });
+    document.querySelectorAll(".reveal").forEach(function (el) { io.observe(el); });
+
+    if (!reduced) {
+      /* Phrases that are not inside a fading section watch for themselves.
+         The threshold is low because a phrase that wraps has a tall bounding
+         box, half of which is the gap between its two lines — 0.5 can never
+         be satisfied there. */
+      var loose = marks.filter(function (el) { return !el.closest(".reveal"); });
+      var mio = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (!en.isIntersecting) { return; }
+          fire(en.target);
+          mio.unobserve(en.target);
+        });
+      }, { threshold: 0.25 });
+      loose.forEach(function (el) {
+        mio.observe(el);
+        /* Safety net: the armed state hides the words, so a phrase that never
+           got its animation would simply be missing from the sentence. */
+        setTimeout(function () {
+          var r = el.getBoundingClientRect();
+          if (r.bottom > 0 && r.top < window.innerHeight) { fire(el); }
+        }, 4000);
+      });
+    }
+  } else {
+    document.querySelectorAll(".reveal").forEach(function (el) { el.classList.add("in"); });
+  }
+
+  /* ----------------------------------------------------------------- theme */
+
+  var toggle = document.getElementById("theme-toggle");
+  var themeLabel = document.getElementById("theme-label");
+  function currentIsDark() {
+    var set = document.documentElement.getAttribute("data-theme");
+    if (set) { return set === "dark"; }
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+  function syncLabel() { themeLabel.textContent = currentIsDark() ? "淺色" : "深色"; }
+  syncLabel();
+  toggle.addEventListener("click", function () {
+    document.documentElement.setAttribute("data-theme", currentIsDark() ? "light" : "dark");
+    syncLabel();
+  });
+})();
+</script>
+</body>
+</html>

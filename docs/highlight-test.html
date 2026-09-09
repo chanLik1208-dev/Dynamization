@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>高亮掃入測試台</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif&display=swap">
+<style>
+  :root {
+    color-scheme: light dark;
+    --paper:  #EEEEEB;
+    --surface:#F7F7F5;
+    --ink:    #191B1A;
+    --ink-2:  #55595A;
+    --ink-3:  #85898B;
+    --rule:   #D3D5D2;
+    --rule-2: #E2E4E1;
+    --blue:   #24379B;
+    --hl:     rgb(36 55 155 / .22);
+
+    --sweep: 260ms;
+    --hold:  160ms;
+    --fade:  380ms;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:  #0E100F;
+      --surface:#161918;
+      --ink:    #E5E7E5;
+      --ink-2:  #9BA1A0;
+      --ink-3:  #6F7574;
+      --rule:   #2B302E;
+      --rule-2: #222725;
+      --blue:   #8FA0F0;
+      --hl:     rgb(143 160 240 / .30);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:  #0E100F;
+    --surface:#161918;
+    --ink:    #E5E7E5;
+    --ink-2:  #9BA1A0;
+    --ink-3:  #6F7574;
+    --rule:   #2B302E;
+    --rule-2: #222725;
+    --blue:   #8FA0F0;
+    --hl:     rgb(143 160 240 / .30);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 40px 24px 80px;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Instrument Sans", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    line-height: 1.75;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+
+  h1 {
+    font-family: "Instrument Serif", "Songti TC", serif;
+    font-weight: 400;
+    font-size: 38px;
+    line-height: 1.15;
+    margin: 0 0 6px;
+  }
+  .sub { color: var(--ink-2); margin: 0 0 34px; }
+
+  /* ── the effect under test — identical to the demo page ───────────── */
+  mark.fs {
+    background-color: transparent;
+    background-image: linear-gradient(var(--hl), var(--hl));
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    background-position: left center;
+    color: var(--ink);
+    font-weight: 600;
+    padding: .04em .16em;
+    margin: 0 -.16em;
+    border-radius: 2px;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+  mark.fs.armed { background-size: 0% 100%; color: transparent; }
+
+  /* @keyframes first-sight and the .seen rule are written by script, so the
+     phase boundaries can move with the sliders */
+
+  .stage {
+    background: var(--surface);
+    border: 1px solid var(--rule-2);
+    border-radius: 4px;
+    padding: 26px 28px;
+    font-size: 19px;
+  }
+  .stage p { margin: 0 0 14px; }
+  .stage p:last-child { margin: 0; }
+
+  /* ── instrument ───────────────────────────────────────────────────── */
+  .panel {
+    margin-top: 26px;
+    display: grid;
+    gap: 18px;
+    background: var(--surface);
+    border: 1px solid var(--rule-2);
+    border-radius: 4px;
+    padding: 20px 24px 24px;
+  }
+  .row { display: grid; grid-template-columns: 86px 1fr 84px; gap: 16px; align-items: center; }
+  .row label { font-size: 13px; color: var(--ink-2); }
+  .row output {
+    font-size: 13px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+  input[type="range"] { width: 100%; accent-color: var(--blue); }
+
+  .readout {
+    display: flex;
+    gap: 22px;
+    flex-wrap: wrap;
+    align-items: baseline;
+    border-top: 1px solid var(--rule-2);
+    padding-top: 16px;
+    font-variant-numeric: tabular-nums;
+  }
+  .readout b { font-size: 30px; font-weight: 600; letter-spacing: -.02em; }
+  .readout span { font-size: 13px; color: var(--ink-2); }
+  .phase {
+    font-size: 12px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 2px;
+    background: var(--blue);
+    color: var(--paper);
+  }
+
+  .controls { display: flex; gap: 10px; flex-wrap: wrap; }
+  button {
+    font: inherit;
+    font-size: 14px;
+    padding: 9px 18px;
+    border-radius: 3px;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  button:hover { border-color: var(--ink-3); }
+  button.primary { background: var(--blue); border-color: var(--blue); color: var(--paper); }
+  button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+  pre {
+    margin: 0;
+    background: var(--paper);
+    border: 1px solid var(--rule-2);
+    border-radius: 3px;
+    padding: 14px 16px;
+    font-size: 12.5px;
+    line-height: 1.6;
+    overflow-x: auto;
+    color: var(--ink-2);
+  }
+  .note { font-size: 13.5px; color: var(--ink-2); margin: 26px 0 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>高亮掃入測試台</h1>
+  <p class="sub">跟展覽頁用的是同一段 CSS。按重播看實際時長，拉滑桿調到你要的手感，底下會給你可以直接貼回去的數值。</p>
+
+  <div class="stage">
+    <p>每一把尺都在主張一件事：<mark class="fs" id="m1">這個世界可以被分割成相等的份</mark>，而且分割的方式對所有人都一樣。</p>
+    <p>而人類對「準」這個字的要求，<mark class="fs" id="m2">從半個指節縮到了千分之一毫米</mark>。</p>
+  </div>
+
+  <div class="panel">
+    <div class="controls">
+      <button class="primary" id="replay" type="button">重播</button>
+      <button id="theme" type="button">切換深淺</button>
+    </div>
+
+    <div class="row">
+      <label for="sweep">掃入</label>
+      <input type="range" id="sweep" min="60" max="1200" step="20" value="300">
+      <output id="sweep-o">300 ms</output>
+    </div>
+    <div class="row">
+      <label for="hold">停住</label>
+      <input type="range" id="hold" min="0" max="2000" step="20" value="300">
+      <output id="hold-o">300 ms</output>
+    </div>
+    <div class="row">
+      <label for="fade">淡出顯字</label>
+      <input type="range" id="fade" min="60" max="1600" step="20" value="400">
+      <output id="fade-o">400 ms</output>
+    </div>
+
+    <div class="readout">
+      <b id="elapsed">0</b><span>ms 已經過</span>
+      <span class="phase" id="phase">閒置</span>
+      <span>總長 <b style="font-size:15px" id="total">1000</b> ms</span>
+    </div>
+
+    <pre id="css">—</pre>
+  </div>
+
+  <p class="note">
+    計時是用 <code>requestAnimationFrame</code> 從動畫開始那一刻量到結束，所以讀數就是這台機器上實際跑出來的時間，不是設定值。
+    如果讀數跟你眼睛感覺差很多，那差距本身就是要看的東西。
+  </p>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var marks = [document.getElementById("m1"), document.getElementById("m2")];
+  var elapsedEl = document.getElementById("elapsed");
+  var phaseEl = document.getElementById("phase");
+  var totalEl = document.getElementById("total");
+  var cssEl = document.getElementById("css");
+  var styleEl = document.createElement("style");
+  document.head.appendChild(styleEl);
+
+  var inputs = {
+    sweep: document.getElementById("sweep"),
+    hold: document.getElementById("hold"),
+    fade: document.getElementById("fade")
+  };
+  var outs = {
+    sweep: document.getElementById("sweep-o"),
+    hold: document.getElementById("hold-o"),
+    fade: document.getElementById("fade-o")
+  };
+
+  function build() {
+    var s = +inputs.sweep.value, h = +inputs.hold.value, f = +inputs.fade.value;
+    var total = s + h + f;
+    var k1 = (s / total * 100).toFixed(2);
+    var k2 = ((s + h) / total * 100).toFixed(2);
+
+    outs.sweep.textContent = s + " ms";
+    outs.hold.textContent = h + " ms";
+    outs.fade.textContent = f + " ms";
+    totalEl.textContent = total;
+
+    styleEl.textContent =
+      "@keyframes first-sight {\n" +
+      "  0% { background-size: 0% 100%;" +
+      " background-image: linear-gradient(var(--blue), var(--blue));" +
+      " color: transparent;" +
+      " animation-timing-function: cubic-bezier(.25,.1,.35,1); }\n" +
+      "  " + k1 + "%, " + k2 + "% { background-size: 100% 100%;" +
+      " background-image: linear-gradient(var(--blue), var(--blue));" +
+      " color: transparent; }\n" +
+      "  100% { background-size: 100% 100%;" +
+      " background-image: linear-gradient(var(--hl), var(--hl));" +
+      " color: var(--ink); }\n" +
+      "}\n" +
+      "mark.fs.seen { animation: first-sight " + total + "ms linear both; }";
+
+    cssEl.textContent =
+      "/* 掃入 " + s + "ms · 停住 " + h + "ms · 淡出 " + f + "ms */\n" +
+      "@keyframes first-sight {\n" +
+      "  0%   { background-size: 0% 100%; ... }\n" +
+      "  " + k1 + "%, " + k2 + "% { background-size: 100% 100%; ... }\n" +
+      "  100% { background-size: 100% 100%; color: var(--ink); }\n" +
+      "}\n" +
+      "animation: first-sight " + total + "ms linear both;";
+
+    return total;
+  }
+
+  var rafId = 0;
+  function play() {
+    var total = build();
+    cancelAnimationFrame(rafId);
+
+    marks.forEach(function (m) {
+      m.classList.remove("seen");
+      m.classList.add("armed");
+    });
+    void marks[0].offsetWidth;
+
+    var s = +inputs.sweep.value, h = +inputs.hold.value;
+    var t0 = performance.now();
+
+    marks.forEach(function (m) { m.classList.add("seen"); });
+
+    function tick(now) {
+      var dt = now - t0;
+      elapsedEl.textContent = Math.round(Math.min(dt, total));
+      phaseEl.textContent = dt < s ? "掃入" : dt < s + h ? "停住" : dt < total ? "淡出顯字" : "結束";
+      if (dt < total) { rafId = requestAnimationFrame(tick); }
+      else { elapsedEl.textContent = Math.round(total); }
+    }
+    rafId = requestAnimationFrame(tick);
+  }
+
+  Object.keys(inputs).forEach(function (k) {
+    inputs[k].addEventListener("input", build);
+    inputs[k].addEventListener("change", play);
+  });
+  document.getElementById("replay").addEventListener("click", play);
+  document.getElementById("theme").addEventListener("click", function () {
+    var d = document.documentElement;
+    var dark = d.getAttribute("data-theme")
+      ? d.getAttribute("data-theme") === "dark"
+      : matchMedia("(prefers-color-scheme: dark)").matches;
+    d.setAttribute("data-theme", dark ? "light" : "dark");
+  });
+
+  build();
+  setTimeout(play, 400);
+})();
+</script>
+</body>
+</html>
