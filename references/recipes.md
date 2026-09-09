@@ -421,6 +421,14 @@ implementation.
   from the sentence.** Guard it: if the observer has not fired within a few seconds and the phrase
   is on screen, run it anyway → `errata.md` §A7.
 - **A phrase inside a section that fades in must wait for it** → `errata.md` §A6.
+- **Ease every segment, including the settle.** A multi-phase animation is usually written as one
+  shorthand with one timing function, and if that function is `linear` the whole thing crawls at
+  constant speed except wherever a keyframe overrides it. The wipe is the segment people remember to
+  ease; the settle is the one they forget, and a settle that stops dead is what "the fade looks
+  wrong" means. Set the curve per segment, in the keyframes.
+- **Let the words land before the block finishes.** A state signal arrives faster than the surface
+  carrying it (`contrast.md` §5): finish the text at about 85% of the animation and let the block
+  keep easing to 100%. Cross-fading both at the same rate reads as mush.
 
 ## 25. Branching on reduced motion
 

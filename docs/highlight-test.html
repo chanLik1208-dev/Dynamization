@@ -254,9 +254,14 @@
       " background-image: linear-gradient(var(--blue), var(--blue));" +
       " color: transparent;" +
       " animation-timing-function: cubic-bezier(.25,.1,.35,1); }\n" +
-      "  " + k1 + "%, " + k2 + "% { background-size: 100% 100%;" +
+      "  " + k1 + "% { background-size: 100% 100%;" +
       " background-image: linear-gradient(var(--blue), var(--blue));" +
-      " color: transparent; }\n" +
+      " color: transparent; animation-timing-function: linear; }\n" +
+      "  " + k2 + "% { background-size: 100% 100%;" +
+      " background-image: linear-gradient(var(--blue), var(--blue));" +
+      " color: transparent;" +
+      " animation-timing-function: cubic-bezier(.25,.1,.35,1); }\n" +
+      "  " + (+k2 + (100 - k2) * 0.62).toFixed(2) + "% { color: var(--ink); }\n" +
       "  100% { background-size: 100% 100%;" +
       " background-image: linear-gradient(var(--hl), var(--hl));" +
       " color: var(--ink); }\n" +

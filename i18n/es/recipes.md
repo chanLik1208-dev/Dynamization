@@ -422,6 +422,16 @@ pack.
   oración.** Ponle una guarda: si el observador no ha disparado en unos segundos y la frase está en
   pantalla, ejecútala igualmente → `errata.md` §A7.
 - **Una frase dentro de una sección que hace fundido de entrada tiene que esperarla** → `errata.md` §A6.
+- **Suaviza cada segmento, incluido el asentamiento.** Una animación de varias fases se suele escribir
+  como una sola forma abreviada con una única función de tiempo, y si esa función es `linear` el conjunto
+  entero se arrastra a velocidad constante salvo allí donde un fotograma clave la sobrescribe. El barrido
+  es el segmento que la gente se acuerda de suavizar; el asentamiento es el que olvida, y un asentamiento
+  que se para en seco es lo que significa «el fundido se ve mal». Fija la curva por segmento, en los
+  fotogramas clave.
+- **Deja que las palabras aterricen antes de que el bloque termine.** Una señal de estado llega más
+  rápido que la superficie que la transporta (`contrast.md` §5): termina el texto en torno al 85% de la
+  animación y deja que el bloque siga suavizando hasta el 100%. Hacer un fundido cruzado de ambos al
+  mismo ritmo queda turbio.
 
 ## 25. Ramificar según el movimiento reducido
 

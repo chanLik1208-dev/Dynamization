@@ -488,11 +488,23 @@
       color: transparent;
       animation-timing-function: cubic-bezier(.25, .1, .35, 1);
     }
-    30%, 60% {
+    30% {
       background-size: 100% 100%;
       background-image: linear-gradient(var(--blue), var(--blue));
       color: transparent;
+      animation-timing-function: linear;   /* the hold: nothing moves */
     }
+    60% {
+      background-size: 100% 100%;
+      background-image: linear-gradient(var(--blue), var(--blue));
+      color: transparent;
+      animation-timing-function: cubic-bezier(.25, .1, .35, 1);
+    }
+    /* The words arrive before the block has finished settling — a state
+       signal lands faster than the surface it lands on (contrast.md §5).
+       background-image has no stop here, so it eases across 60% → 100%
+       while the text finishes at 85%. */
+    85% { color: var(--ink); }
     100% {
       background-size: 100% 100%;
       background-image: linear-gradient(var(--hl), var(--hl));
