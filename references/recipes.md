@@ -396,10 +396,10 @@ that stays. The words are not there during the wipe — they arrive with the fad
 
 | Phase | Channel | From → To | Timing |
 |---|---|---|---|
-| wipe | block width | `0% → 100%`, from the left | `dur 0.3  curve out` |
-| hold | — | solid accent, no text | `0.3s` |
-| settle | block | accent → accent at `20–30%` — still obviously the accent colour, not a grey | `dur 0.4  curve out` |
-| settle | text | transparent → ink | `dur 0.4  curve out` |
+| wipe | block width | `0% → 100%`, from the left | `dur 0.42  curve out` |
+| hold | — | solid accent, no text | `0.13s` — a beat, not a pause |
+| settle | block | accent → accent at `20–30%` — still obviously the accent colour, not a grey | `dur 0.45  curve inout` |
+| settle | text | transparent → ink | finishes at ~88% of the whole |
 
 The resting state — light tint plus emphasised text — is the **base** style. The animation is
 additive, so a reader with no script, no `IntersectionObserver` or reduced motion still gets the
@@ -426,6 +426,12 @@ implementation.
   constant speed except wherever a keyframe overrides it. The wipe is the segment people remember to
   ease; the settle is the one they forget, and a settle that stops dead is what "the fade looks
   wrong" means. Set the curve per segment, in the keyframes.
+- **A hold is a beat, not a pause, and the settle must ease out of it.** Two mistakes that produce
+  the same complaint — *it sticks, then vanishes*. A hold long enough to be fully static (much past
+  `0.15s`) stops reading as emphasis and starts reading as a hitch. And `curve out` on the settle is
+  wrong here even though it is right almost everywhere else: easeOut front-loads its change, so the
+  colour dumps in the first fifth of the segment and the block appears to disappear rather than
+  calm down. Use `curve inout` — it leaves the hold gently and decelerates into rest.
 - **Let the words land before the block finishes.** A state signal arrives faster than the surface
   carrying it (`contrast.md` §5): finish the text at about 85% of the animation and let the block
   keep easing to 100%. Cross-fading both at the same rate reads as mush.

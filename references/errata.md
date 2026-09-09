@@ -187,6 +187,67 @@ this survives review.
 
 ---
 
+### A8. The user-agent stylesheet had an opinion you did not override
+
+**Silent symptom:** a colour appears that is nowhere in your palette. A highlight comes out yellow
+in a product with no yellow in it; a link keeps an underline you never asked for; a control ignores
+your type stack.
+
+```css
+/* ❌ the yellow is still there, under the tint */
+mark.fs {
+  background-image: linear-gradient(var(--hl), var(--hl));
+}
+```
+
+**Why it gets written:** you set the property you were thinking about. The browser had already set a
+*different* property that paints in the same place — `background-color` under your
+`background-image`, `text-decoration` beside your `color`, a `font` on form controls that does not
+inherit. Your declaration is correct and it wins its own cascade; it simply is not the whole
+surface.
+
+```css
+/* ✅ */
+mark.fs {
+  background-color: transparent;
+  background-image: linear-gradient(var(--hl), var(--hl));
+}
+```
+
+**The check:** any element you style that carries a native semantic — `mark`, `button`, `input`,
+`fieldset`, `summary`, `dialog`, `progress`, `a` — look at it once with your own styles disabled.
+Whatever you see there is what you are painting over, and any part of it you did not name explicitly
+is still underneath.
+
+---
+
+### A9. Display type sized in viewport units, tuned on Latin
+
+**Silent symptom:** a headline that is right in English and falls apart in Chinese, Japanese or
+Korean — breaking after two characters, or in the middle of a word that should not be split. It does
+not overflow, so nothing looks obviously broken in a screenshot; it just reads as careless.
+
+```css
+/* ❌ chosen by eye against a Latin headline */
+h1 { font-size: clamp(46px, 8vw, 92px); }
+```
+
+**Why it gets written:** you pick the viewport coefficient by dragging the window with English in the
+heading. Latin has narrow glyphs, and its lines break at spaces — a slightly-too-large size shows up
+immediately as a word wrapping badly. CJK has neither: every character is one em wide, and a line
+may break between any two of them. Too large does not produce an obvious break; it produces an
+arbitrary one, which survives review because it still looks like a line of text.
+
+**The fix:** size CJK display type roughly 25–35% smaller than the Latin setting you arrived at, and
+choose the `clamp()` maximum against the **narrowest column the headline will ever occupy** —
+including any gutter you reserved for something decorative (`contrast.md` §8 makes reserving one a
+rule, and reserving it is what shrank the column here).
+
+**The check:** view every `clamp()` heading at the width just above each breakpoint, in the language
+with the widest glyphs you ship. Not at your own window size, and not in English.
+
+---
+
 ## B. You broke a rule this pack states plainly
 
 ### B1. Moving something with layout properties
@@ -275,6 +336,46 @@ resolve this by silently ignoring one system.
 
 **The check:** grep for `stiffness` and `damping`. Every hit should be inside the conversion
 function, and nowhere else.
+
+---
+
+### B5. One shorthand, one timing function, and every phase you were not thinking about
+
+**Silent symptom:** a multi-phase animation whose middle is right and whose end stops dead. Readers
+describe it as "the fade looks wrong" and cannot say more, because the phase that is wrong is the
+one nobody watches.
+
+```css
+/* ❌ every segment is linear except the one keyframe that overrode it */
+animation: first-sight 1s linear both;
+@keyframes first-sight {
+  0%   { …; animation-timing-function: cubic-bezier(.25,.1,.35,1); }
+  30%  { … }
+  60%  { … }
+  100% { … }
+}
+```
+
+**Why it gets written:** the shorthand needs *a* timing function, `linear` is the neutral-sounding
+one, and then you ease the phase you are actually designing. Every other phase silently inherits
+`linear` — and `linear` for anything that starts and stops is the anti-pattern in `feel.md` §10.
+
+```css
+/* ✅ a function on every keyframe that begins a segment */
+0%   { …; animation-timing-function: cubic-bezier(.25,.1,.35,1); }  /* the wipe */
+30%  { …; animation-timing-function: linear; }                      /* the hold: nothing moves */
+60%  { …; animation-timing-function: cubic-bezier(.25,.1,.35,1); }  /* the settle */
+100% { … }
+```
+
+**Worth noticing separately:** this pack's own `recipes.md` §26 specified `curve out` for that
+settle, and the implementation shipped `linear`. **The spec was right and the code was wrong, and
+nothing in any toolchain compares the two.** Wherever a document states a number the code is
+supposed to hold, that agreement is maintained by someone reading both — so put the number in the
+comment beside the code, where the next person will see it without going to look.
+
+**The check:** count the timing functions in the keyframes. One per segment boundary, or you are
+inheriting the shorthand's — and read the recipe alongside the code once, out loud if necessary.
 
 ---
 
@@ -429,3 +530,6 @@ Run this before claiming an animation is done. It is ordered by how often the ch
 - [ ] Opened every `§N` you cited (E2)
 - [ ] Asked, for each entrance, what its ancestors were doing at that moment (A6)
 - [ ] Made one test phrase long enough to wrap onto a second line (A7)
+- [ ] Looked at every natively-styled element once with your own styles off (A8)
+- [ ] Viewed every `clamp()` heading in your widest-glyph language, at the narrowest column it gets (A9)
+- [ ] Counted the timing functions in every multi-phase keyframe set (B5)

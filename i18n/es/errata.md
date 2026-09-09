@@ -188,6 +188,67 @@ nadie lo hace, y por eso esto sobrevive a la revisión.
 
 ---
 
+### A8. La hoja de estilos del agente de usuario tenía una opinión que no sobrescribiste
+
+**Síntoma silencioso:** aparece un color que no está en ninguna parte de tu paleta. Un resaltado sale amarillo
+en un producto que no tiene nada de amarillo; un enlace conserva un subrayado que nunca pediste; un control
+ignora tu pila tipográfica.
+
+```css
+/* ❌ el amarillo sigue ahí, debajo del tinte */
+mark.fs {
+  background-image: linear-gradient(var(--hl), var(--hl));
+}
+```
+
+**Por qué se escribe:** fijaste la propiedad en la que estabas pensando. El navegador ya había fijado una
+propiedad *distinta* que pinta en el mismo sitio: el `background-color` debajo de tu `background-image`, el
+`text-decoration` junto a tu `color`, un `font` en los controles de formulario que no se hereda. Tu declaración
+es correcta y gana su propia cascada; simplemente no es toda la superficie.
+
+```css
+/* ✅ */
+mark.fs {
+  background-color: transparent;
+  background-image: linear-gradient(var(--hl), var(--hl));
+}
+```
+
+**La comprobación:** cualquier elemento que estilices y que lleve una semántica nativa —`mark`, `button`,
+`input`, `fieldset`, `summary`, `dialog`, `progress`, `a`— míralo una vez con tus propios estilos desactivados.
+Lo que veas ahí es lo que estás pintando por encima, y toda parte de ello que no hayas nombrado
+explícitamente sigue estando debajo.
+
+---
+
+### A9. Tipografía de display dimensionada en unidades de viewport, ajustada sobre alfabeto latino
+
+**Síntoma silencioso:** un titular que está bien en inglés y se descompone en chino, japonés o coreano:
+partiendo después de dos caracteres, o en mitad de una palabra que no debería partirse. No desborda, así que
+nada parece obviamente roto en una captura; simplemente se lee como descuidado.
+
+```css
+/* ❌ elegido a ojo contra un titular en alfabeto latino */
+h1 { font-size: clamp(46px, 8vw, 92px); }
+```
+
+**Por qué se escribe:** eliges el coeficiente de viewport arrastrando la ventana con el titular en inglés. El
+alfabeto latino tiene glifos estrechos y sus líneas se parten en los espacios: un tamaño ligeramente
+demasiado grande aparece de inmediato como una palabra que se parte mal. El CJK no tiene ninguna de las dos
+cosas: cada carácter mide un em de ancho, y la línea puede partirse entre dos cualesquiera de ellos.
+Demasiado grande no produce una partición evidente; produce una arbitraria, que sobrevive a la revisión
+porque sigue pareciendo una línea de texto.
+
+**El arreglo:** dimensiona la tipografía de display CJK más o menos un 25–35% más pequeña que el ajuste latino
+al que llegaste, y elige el máximo del `clamp()` contra **la columna más estrecha que el titular vaya a ocupar
+jamás**, incluido cualquier hueco que hayas reservado para algo decorativo (`contrast.md` §8 convierte en regla
+reservar uno, y reservarlo es lo que estrechó la columna aquí).
+
+**La comprobación:** mira cada titular con `clamp()` en el ancho justo por encima de cada breakpoint, en el
+idioma de glifos más anchos que publiques. No al tamaño de tu propia ventana, y no en inglés.
+
+---
+
 ## B. Rompiste una regla que este pack enuncia con toda claridad
 
 ### B1. Mover algo con propiedades de layout
@@ -276,6 +337,45 @@ resuelven esto ignorando en silencio uno de los dos sistemas.
 
 **La comprobación:** haz grep de `stiffness` y `damping`. Cada resultado debería estar dentro de la función de
 conversión, y en ningún otro sitio.
+
+---
+
+### B5. Un shorthand, una función de temporización, y todas las fases en las que no estabas pensando
+
+**Síntoma silencioso:** una animación multifase cuyo medio está bien y cuyo final se para en seco. Los lectores
+lo describen como «el fundido se ve mal» y no saben decir más, porque la fase que está mal es la que nadie mira.
+
+```css
+/* ❌ todos los segmentos son linear salvo el único keyframe que lo sobrescribió */
+animation: first-sight 1s linear both;
+@keyframes first-sight {
+  0%   { …; animation-timing-function: cubic-bezier(.25,.1,.35,1); }
+  30%  { … }
+  60%  { … }
+  100% { … }
+}
+```
+
+**Por qué se escribe:** el shorthand necesita *una* función de temporización, `linear` es la que suena neutral,
+y luego suavizas la fase que de verdad estás diseñando. Todas las demás fases heredan `linear` en silencio, y
+`linear` para cualquier cosa que arranca y se detiene es el antipatrón de `feel.md` §10.
+
+```css
+/* ✅ una función en cada keyframe que abre un segmento */
+0%   { …; animation-timing-function: cubic-bezier(.25,.1,.35,1); }  /* el barrido */
+30%  { …; animation-timing-function: linear; }                      /* la pausa: nada se mueve */
+60%  { …; animation-timing-function: cubic-bezier(.25,.1,.35,1); }  /* el asentamiento */
+100% { … }
+```
+
+**Vale la pena señalarlo aparte:** el propio `recipes.md` §26 de este pack especificaba `curve out` para ese
+asentamiento, y la implementación salió con `linear`. **La especificación tenía razón y el código estaba mal, y
+nada en ninguna cadena de herramientas compara las dos cosas.** Allí donde un documento enuncia un número que
+se supone que el código sostiene, esa concordancia la mantiene alguien leyendo ambos; así que pon el número en
+el comentario junto al código, donde la siguiente persona lo verá sin tener que ir a buscarlo.
+
+**La comprobación:** cuenta las funciones de temporización en los keyframes. Una por frontera de segmento, o
+estás heredando la del shorthand; y lee la receta junto al código una vez, en voz alta si hace falta.
 
 ---
 
@@ -430,3 +530,6 @@ Recórrela antes de afirmar que una animación está terminada. Está ordenada p
 - [ ] Abierto cada `§N` que hayas citado (E2)
 - [ ] Preguntado, para cada entrada, qué estaban haciendo sus ancestros en ese momento (A6)
 - [ ] Hecha una frase de prueba lo bastante larga como para partirse en una segunda línea (A7)
+- [ ] Mirado cada elemento con estilos nativos una vez con tus propios estilos desactivados (A8)
+- [ ] Visto cada titular con `clamp()` en tu idioma de glifos más anchos, en la columna más estrecha que le toca (A9)
+- [ ] Contadas las funciones de temporización en cada set de keyframes multifase (B5)

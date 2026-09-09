@@ -396,10 +396,10 @@ Las palabras no están ahí durante el barrido: llegan con el fundido.
 
 | Fase | Canal | De → A | Tiempo |
 |---|---|---|---|
-| barrido | ancho del bloque | `0% → 100%`, desde la izquierda | `dur 0.3  curve out` |
-| espera | — | acento sólido, sin texto | `0.3s` |
-| asentamiento | bloque | acento → acento al `20–30%` — sigue siendo obviamente el color de acento, no un gris | `dur 0.4  curve out` |
-| asentamiento | texto | transparente → tinta | `dur 0.4  curve out` |
+| barrido | ancho del bloque | `0% → 100%`, desde la izquierda | `dur 0.42  curve out` |
+| espera | — | acento sólido, sin texto | `0.13s` — un compás, no una pausa |
+| asentamiento | bloque | acento → acento al `20–30%` — sigue siendo obviamente el color de acento, no un gris | `dur 0.45  curve inout` |
+| asentamiento | texto | transparente → tinta | termina en torno al 88% del conjunto |
 
 El estado en reposo —tinte claro más texto enfatizado— es el estilo **base**. La animación es aditiva, así
 que un lector sin script, sin `IntersectionObserver` o con movimiento reducido recibe igualmente el énfasis
@@ -428,6 +428,13 @@ pack.
   es el segmento que la gente se acuerda de suavizar; el asentamiento es el que olvida, y un asentamiento
   que se para en seco es lo que significa «el fundido se ve mal». Fija la curva por segmento, en los
   fotogramas clave.
+- **Una espera es un compás, no una pausa, y el asentamiento tiene que salir suavizado de ella.** Dos
+  errores que producen la misma queja: *se queda pegado y luego desaparece*. Una espera lo bastante
+  larga como para ser del todo estática (bastante más allá de `0.15s`) deja de leerse como énfasis y
+  empieza a leerse como un tirón. Y `curve out` en el asentamiento es un error aquí aunque sea lo
+  correcto casi en todas partes: easeOut carga su cambio al principio, así que el color se vuelca en el
+  primer quinto del segmento y el bloque parece desaparecer en vez de calmarse. Usa `curve inout`: sale
+  de la espera con suavidad y decelera hasta el reposo.
 - **Deja que las palabras aterricen antes de que el bloque termine.** Una señal de estado llega más
   rápido que la superficie que la transporta (`contrast.md` §5): termina el texto en torno al 85% de la
   animación y deja que el bloque siga suavizando hasta el 100%. Hacer un fundido cruzado de ambos al
