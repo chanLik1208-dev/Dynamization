@@ -17,10 +17,6 @@
     --rule-2: #E2E4E1;
     --blue:   #24379B;
     --hl:     rgb(36 55 155 / .22);
-
-    --sweep: 260ms;
-    --hold:  160ms;
-    --fade:  380ms;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -67,25 +63,34 @@
   }
   .sub { color: var(--ink-2); margin: 0 0 34px; }
 
-  /* ── the effect under test — identical to the demo page ───────────── */
+  /* ── the effect under test — identical to the exhibition page ─────── */
+
+  /* resting: the block the stroke left behind, plus the emphasised words */
   mark.fs {
     background-color: transparent;
     background-image: linear-gradient(var(--hl), var(--hl));
     background-repeat: no-repeat;
-    background-size: 100% 100%;
     background-position: left center;
+    background-size: 100% 100%;
     color: var(--ink);
     font-weight: 600;
     padding: .04em .16em;
     margin: 0 -.16em;
-    border-radius: 2px;
+    border-radius: 3px;
     -webkit-box-decoration-break: clone;
     box-decoration-break: clone;
   }
-  mark.fs.armed { background-size: 0% 100%; color: transparent; }
-
+  /* armed: two layers — the stroke, and the block it is going to leave */
+  mark.fs.armed {
+    background-image:
+      linear-gradient(var(--blue), var(--blue)),
+      linear-gradient(var(--hl),   var(--hl));
+    background-position: left center, left center;
+    background-size: 0% 100%, 0% 100%;
+    color: transparent;
+  }
   /* @keyframes first-sight and the .seen rule are written by script, so the
-     phase boundaries can move with the sliders */
+     phase boundaries move with the sliders */
 
   .stage {
     background: var(--surface);
@@ -107,7 +112,7 @@
     border-radius: 4px;
     padding: 20px 24px 24px;
   }
-  .row { display: grid; grid-template-columns: 86px 1fr 84px; gap: 16px; align-items: center; }
+  .row { display: grid; grid-template-columns: 116px 1fr 104px; gap: 16px; align-items: center; }
   .row label { font-size: 13px; color: var(--ink-2); }
   .row output {
     font-size: 13px;
@@ -131,7 +136,6 @@
   .phase {
     font-size: 12px;
     letter-spacing: .12em;
-    text-transform: uppercase;
     padding: 3px 9px;
     border-radius: 2px;
     background: var(--blue);
@@ -170,7 +174,10 @@
 <body>
 <div class="wrap">
   <h1>高亮掃入測試台</h1>
-  <p class="sub">跟展覽頁用的是同一段 CSS。按重播看實際時長，拉滑桿調到你要的手感，底下會給你可以直接貼回去的數值。</p>
+  <p class="sub">
+    跟展覽頁用的是同一段 CSS：一筆兩段掃描，中間等待。按重播看實際時長，拉滑桿調到你要的手感，
+    底下會給你可以直接貼回去的關鍵幀。
+  </p>
 
   <div class="stage">
     <p>每一把尺都在主張一件事：<mark class="fs" id="m1">這個世界可以被分割成相等的份</mark>，而且分割的方式對所有人都一樣。</p>
@@ -184,33 +191,40 @@
     </div>
 
     <div class="row">
-      <label for="sweep">掃入</label>
-      <input type="range" id="sweep" min="60" max="1200" step="20" value="360">
-      <output id="sweep-o">360 ms</output>
+      <label for="p1">第一段掃入</label>
+      <input type="range" id="p1" min="80" max="1200" step="20" value="380">
+      <output id="p1-o">380 ms</output>
     </div>
     <div class="row">
-      <label for="hold">停住</label>
-      <input type="range" id="hold" min="0" max="2000" step="20" value="80">
-      <output id="hold-o">80 ms</output>
+      <label for="wait">等待</label>
+      <input type="range" id="wait" min="0" max="1200" step="10" value="130">
+      <output id="wait-o">130 ms</output>
     </div>
     <div class="row">
-      <label for="fade">淡出顯字</label>
-      <input type="range" id="fade" min="60" max="1600" step="20" value="560">
-      <output id="fade-o">560 ms</output>
+      <label for="p2">第二段掃出</label>
+      <input type="range" id="p2" min="80" max="1600" step="20" value="480">
+      <output id="p2-o">480 ms</output>
+    </div>
+    <div class="row">
+      <label for="txt">文字落定於</label>
+      <input type="range" id="txt" min="50" max="100" step="1" value="92">
+      <output id="txt-o">第二段的 92%</output>
     </div>
 
     <div class="readout">
       <b id="elapsed">0</b><span>ms 已經過</span>
       <span class="phase" id="phase">閒置</span>
-      <span>總長 <b style="font-size:15px" id="total">1000</b> ms</span>
+      <span>總長 <b style="font-size:15px" id="total">990</b> ms</span>
     </div>
 
     <pre id="css">—</pre>
   </div>
 
   <p class="note">
-    計時是用 <code>requestAnimationFrame</code> 從動畫開始那一刻量到結束，所以讀數就是這台機器上實際跑出來的時間，不是設定值。
-    如果讀數跟你眼睛感覺差很多，那差距本身就是要看的東西。
+    計時是用 <code>requestAnimationFrame</code> 從動畫開始那一刻量到結束，讀數是這台機器上實際跑出來的時間，
+    不是設定值。<br>
+    第二段之所以讀起來像「繼續掃」而不是「退回去」，是因為錨點在筆畫滿寬的那一格從左緣換到右緣——
+    那時看不出來——而且用 <code>steps(1, end)</code> 讓它離散切換，否則錨點會在第一段的過程中一路飄移。
   </p>
 </div>
 
@@ -226,63 +240,65 @@
   var styleEl = document.createElement("style");
   document.head.appendChild(styleEl);
 
-  var inputs = {
-    sweep: document.getElementById("sweep"),
-    hold: document.getElementById("hold"),
-    fade: document.getElementById("fade")
-  };
-  var outs = {
-    sweep: document.getElementById("sweep-o"),
-    hold: document.getElementById("hold-o"),
-    fade: document.getElementById("fade-o")
-  };
+  var ids = ["p1", "wait", "p2", "txt"];
+  var inputs = {}, outs = {};
+  ids.forEach(function (k) {
+    inputs[k] = document.getElementById(k);
+    outs[k] = document.getElementById(k + "-o");
+  });
+
+  var EASE_IN = "cubic-bezier(.16, 1, .3, 1)";
+  var EASE_OUT = "cubic-bezier(.33, 0, .15, 1)";
 
   function build() {
-    var s = +inputs.sweep.value, h = +inputs.hold.value, f = +inputs.fade.value;
-    var total = s + h + f;
-    var k1 = (s / total * 100).toFixed(2);
-    var k2 = ((s + h) / total * 100).toFixed(2);
+    var p1 = +inputs.p1.value, wait = +inputs.wait.value,
+        p2 = +inputs.p2.value, txt = +inputs.txt.value;
+    var total = p1 + wait + p2;
 
-    outs.sweep.textContent = s + " ms";
-    outs.hold.textContent = h + " ms";
-    outs.fade.textContent = f + " ms";
+    var k1 = p1 / total * 100;                  /* the stroke is at full width */
+    var kFlip = Math.min(k1 + 1, 99);           /* the anchor moves, invisibly */
+    var k2 = (p1 + wait) / total * 100;         /* the second pass begins */
+    var kTxt = k2 + (100 - k2) * (txt / 100);   /* the words are down */
+
+    outs.p1.textContent = p1 + " ms";
+    outs.wait.textContent = wait + " ms";
+    outs.p2.textContent = p2 + " ms";
+    outs.txt.textContent = "第二段的 " + txt + "%";
     totalEl.textContent = total;
 
-    styleEl.textContent =
+    var f = function (n) { return n.toFixed(2); };
+    var kf =
       "@keyframes first-sight {\n" +
-      "  0% { background-size: 0% 100%;" +
-      " background-image: linear-gradient(var(--blue), var(--blue));" +
-      " color: transparent;" +
-      " animation-timing-function: cubic-bezier(.25,.1,.35,1); }\n" +
-      "  " + k1 + "% { background-size: 100% 100%;" +
-      " background-image: linear-gradient(var(--blue), var(--blue));" +
-      " color: transparent; animation-timing-function: linear; }\n" +
-      "  " + k2 + "% { background-size: 100% 100%;" +
-      " background-image: linear-gradient(var(--blue), var(--blue));" +
-      " color: transparent;" +
-      " animation-timing-function: cubic-bezier(.4,0,.2,1); }\n" +
-      "  " + (+k2 + (100 - k2) * 0.857).toFixed(2) + "% { color: var(--ink); }\n" +
-      "  100% { background-size: 100% 100%;" +
-      " background-image: linear-gradient(var(--hl), var(--hl));" +
-      " color: var(--ink); }\n" +
-      "}\n" +
-      "mark.fs.seen { animation: first-sight " + total + "ms linear both; }";
+      "  0% { background-size: 0% 100%, 0% 100%;" +
+      " background-position: left center, left center; color: transparent;" +
+      " animation-timing-function: " + EASE_IN + "; }\n" +
+      "  " + f(k1) + "% { background-size: 100% 100%, 100% 100%;" +
+      " background-position: left center, left center;" +
+      " animation-timing-function: steps(1, end); }\n" +
+      "  " + f(kFlip) + "% { background-size: 100% 100%, 100% 100%;" +
+      " background-position: right center, left center;" +
+      " animation-timing-function: linear; }\n" +
+      "  " + f(k2) + "% { background-size: 100% 100%, 100% 100%;" +
+      " background-position: right center, left center; color: transparent;" +
+      " animation-timing-function: " + EASE_OUT + "; }\n" +
+      "  " + f(kTxt) + "% { color: var(--ink); }\n" +
+      "  100% { background-size: 0% 100%, 100% 100%;" +
+      " background-position: right center, left center; color: var(--ink); }\n" +
+      "}";
+
+    styleEl.textContent = kf +
+      "\nmark.fs.seen { animation: first-sight " + total + "ms linear both; }";
 
     cssEl.textContent =
-      "/* 掃入 " + s + "ms · 停住 " + h + "ms · 淡出 " + f + "ms */\n" +
-      "@keyframes first-sight {\n" +
-      "  0%   { background-size: 0% 100%; ... }\n" +
-      "  " + k1 + "%, " + k2 + "% { background-size: 100% 100%; ... }\n" +
-      "  100% { background-size: 100% 100%; color: var(--ink); }\n" +
-      "}\n" +
-      "animation: first-sight " + total + "ms linear both;";
+      "/* 第一段 " + p1 + "ms · 等待 " + wait + "ms · 第二段 " + p2 + "ms */\n" +
+      kf + "\nanimation: first-sight " + total + "ms linear both;";
 
-    return total;
+    return { total: total, p1: p1, wait: wait };
   }
 
   var rafId = 0;
   function play() {
-    var total = build();
+    var t = build();
     cancelAnimationFrame(rafId);
 
     marks.forEach(function (m) {
@@ -291,22 +307,23 @@
     });
     void marks[0].offsetWidth;
 
-    var s = +inputs.sweep.value, h = +inputs.hold.value;
     var t0 = performance.now();
-
     marks.forEach(function (m) { m.classList.add("seen"); });
 
     function tick(now) {
       var dt = now - t0;
-      elapsedEl.textContent = Math.round(Math.min(dt, total));
-      phaseEl.textContent = dt < s ? "掃入" : dt < s + h ? "停住" : dt < total ? "淡出顯字" : "結束";
-      if (dt < total) { rafId = requestAnimationFrame(tick); }
-      else { elapsedEl.textContent = Math.round(total); }
+      elapsedEl.textContent = Math.round(Math.min(dt, t.total));
+      phaseEl.textContent =
+        dt < t.p1 ? "第一段掃入" :
+        dt < t.p1 + t.wait ? "等待" :
+        dt < t.total ? "第二段掃出" : "結束";
+      if (dt < t.total) { rafId = requestAnimationFrame(tick); }
+      else { elapsedEl.textContent = Math.round(t.total); }
     }
     rafId = requestAnimationFrame(tick);
   }
 
-  Object.keys(inputs).forEach(function (k) {
+  ids.forEach(function (k) {
     inputs[k].addEventListener("input", build);
     inputs[k].addEventListener("change", play);
   });
